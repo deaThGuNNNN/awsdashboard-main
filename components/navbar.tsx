@@ -1,14 +1,23 @@
 "use client"
 
-import { RefreshCw, Settings, Database, Home, Server } from "lucide-react"
+import { RefreshCw, Settings, Database, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface NavbarProps {
   onRefresh: () => void
+  activeTab: string
+  onTabChange: (tab: string) => void
 }
 
-export default function Navbar({ onRefresh }: NavbarProps) {
+export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProps) {
+  const router = useRouter()
+
+  const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    onTabChange(tab)
+  }
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -18,22 +27,46 @@ export default function Navbar({ onRefresh }: NavbarProps) {
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/" className="flex items-center space-x-1 text-gray-700 hover:text-primary">
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('dashboard')}
+          >
             <Home className="h-4 w-4" />
             <span>Dashboard</span>
-          </Link>
-          <Link href="#ec2" className="flex items-center space-x-1 text-gray-700 hover:text-primary">
+          </Button>
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'ec2' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('ec2')}
+          >
             <Server className="h-4 w-4" />
             <span>EC2 Instances</span>
-          </Link>
-          <Link href="#rds" className="flex items-center space-x-1 text-gray-700 hover:text-primary">
+          </Button>
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'rds' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('rds')}
+          >
             <Database className="h-4 w-4" />
             <span>RDS Instances</span>
-          </Link>
-          <Link href="#settings" className="flex items-center space-x-1 text-gray-700 hover:text-primary">
+          </Button>
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'settings' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('settings')}
+          >
             <Settings className="h-4 w-4" />
             <span>Settings</span>
-          </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'analytics' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('analytics')}
+          >
+            <BarChart className="h-4 w-4" />
+            <span>Analytics</span>
+          </Button>
         </nav>
 
         <div className="flex items-center space-x-2">

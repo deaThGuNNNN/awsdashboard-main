@@ -6,10 +6,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { InfoIcon, Loader2, RefreshCw, Search } from "lucide-react"
+import { InfoIcon, Loader2, RefreshCw, Search, Filter } from "lucide-react"
 import Navbar from "@/components/navbar"
 import InstanceTable from "@/components/instance-table"
 import { mockEC2Data, mockRDSData } from "@/lib/mock-data"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import Analytics from "@/components/analytics"
 
 // Define types for our data
 interface EC2Instance {
@@ -42,17 +58,50 @@ interface RDSInstance {
 }
 
 export default function Home() {
-  // Initialize data directly from imports
+  // Add filters state
+  const [filters, setFilters] = useState<Record<string, string>>({})
   const [ec2Data] = useState<EC2Instance[]>(mockEC2Data)
   const [rdsData] = useState<RDSInstance[]>(mockRDSData)
-
-  // Initialize filtered data with all data
   const [filteredEC2Data, setFilteredEC2Data] = useState<EC2Instance[]>(mockEC2Data)
   const [filteredRDSData, setFilteredRDSData] = useState<RDSInstance[]>(mockRDSData)
-
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("ec2")
   const [isLoading, setIsLoading] = useState(false)
+
+  // Add filter related functions
+  const filterableFields = [
+    { key: "State", label: "State" },
+    { key: "Instance Type", label: "Instance Type" },
+    { key: "Environment", label: "Environment" },
+    { key: "Operating System_y", label: "Operating System" },
+    { key: "Application", label: "Application" }
+  ]
+
+  const handleFilterChange = (field: string, value: string | null) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value || undefined
+    }))
+  }
+
+  const clearFilters = useCallback(() => {
+    setFilters({})
+    setFilteredEC2Data(ec2Data)
+    setFilteredRDSData(rdsData)
+  }, [ec2Data, rdsData])
+
+  // Get unique values for filterable fields
+  const getUniqueValues = (field: string) => {
+    const values = new Set<string>()
+    const allData = [...ec2Data, ...rdsData]
+    allData.forEach(item => {
+      const value = item[field]
+      if (value !== null && value !== undefined && value !== '') {
+        values.add(String(value))
+      }
+    })
+    return Array.from(values).sort()
+  }
 
   // Filter function for searching
   const filterData = useCallback(
@@ -142,133 +191,307 @@ export default function Home() {
   }
 
   // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value)
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    // Update the tabs component value
+    if (tab === 'ec2' || tab === 'rds') {
+      // Only update if it's one of the main tabs
+      setCurrentTab(tab)
+    }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar onRefresh={handleRefresh} />
+      <Navbar 
+        onRefresh={handleRefresh} 
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
       <main className="container mx-auto py-6 px-4 flex-grow">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-          <h1 className="text-3xl font-bold">AWS Resources Dashboard</h1>
+        {activeTab === 'analytics' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics Dashboard</CardTitle>
+              <CardDescription>Analyze your AWS resources usage and patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Analytics ec2Data={ec2Data} rdsData={rdsData} />
+            </CardContent>
+          </Card>
+        ) : activeTab === 'settings' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Settings</CardTitle>
+              <CardDescription>Manage your AWS Dashboard settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Add settings content here */}
+              <div className="text-gray-500">Settings page coming soon...</div>
+            </CardContent>
+          </Card>
+        ) : activeTab === 'dashboard' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Dashboard Overview</CardTitle>
+              <CardDescription>View your AWS resources at a glance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Add dashboard content here */}
+              <div className="text-gray-500">Dashboard overview coming soon...</div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+              <h1 className="text-3xl font-bold">AWS Resources Dashboard</h1>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="flex items-center gap-1"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              <span>Refresh</span>
-            </Button>
-          </div>
-        </div>
+            <div className="mb-6 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="text"
+                  placeholder="Search instances..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              <Button onClick={handleSearch}>Search</Button>
+            </div>
 
-        <div className="mb-6 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search instances..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-          <Button onClick={handleSearch}>Search</Button>
-        </div>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="ec2">EC2 Instances ({ec2Data.length})</TabsTrigger>
+                <TabsTrigger value="rds">RDS Instances ({rdsData.length})</TabsTrigger>
+              </TabsList>
 
-        <Tabs defaultValue="ec2" className="w-full" onValueChange={handleTabChange}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="ec2">EC2 Instances ({ec2Data.length})</TabsTrigger>
-            <TabsTrigger value="rds">RDS Instances ({rdsData.length})</TabsTrigger>
-          </TabsList>
+              <TabsContent value="ec2">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle>EC2 Instances</CardTitle>
+                      <CardDescription>View and manage your EC2 instances across all regions</CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <Filter className="h-4 w-4" />
+                          Filters
+                          {Object.keys(filters || {}).length > 0 && (
+                            <span className="ml-1 rounded-full bg-primary w-5 h-5 text-xs flex items-center justify-center text-white">
+                              {Object.keys(filters || {}).length}
+                            </span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {filterableFields.map(({ key, label }) => (
+                          <DropdownMenuItem key={key} className="flex flex-col items-start p-2">
+                            <div className="font-medium mb-1">{label}</div>
+                            <Select
+                              value={filters?.[key] || null}
+                              onValueChange={(value) => handleFilterChange(key, value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getUniqueValues(key).map((value) => (
+                                  <SelectItem key={value} value={value}>
+                                    {value}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-center justify-center text-destructive"
+                          onClick={clearFilters}
+                        >
+                          Clear all filters
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
 
-          <TabsContent value="ec2">
-            <Card>
-              <CardHeader>
-                <CardTitle>EC2 Instances</CardTitle>
-                <CardDescription>View and manage your EC2 instances across all regions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="ml-2">Loading EC2 instances...</span>
-                  </div>
-                ) : filteredEC2Data.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No EC2 instances found matching your search criteria.</p>
-                    {searchTerm && (
-                      <Button
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => {
-                          setSearchTerm("")
-                          setFilteredEC2Data(ec2Data)
-                        }}
-                      >
-                        Clear Search
-                      </Button>
+                  {filters && Object.keys(filters).length > 0 && (
+                    <div className="px-6 py-2 border-b">
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(filters).map(([field, value]) => value && value !== 'all' && (
+                          <div key={field} className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded">
+                            <span>{field}: {value}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
+                              onClick={() => handleFilterChange(field, null)}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="ml-2">Loading EC2 instances...</span>
+                      </div>
+                    ) : filteredEC2Data.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No EC2 instances found matching your search criteria.</p>
+                        {searchTerm && (
+                          <Button
+                            variant="outline"
+                            className="mt-2"
+                            onClick={() => {
+                              setSearchTerm("")
+                              setFilteredEC2Data(ec2Data)
+                            }}
+                          >
+                            Clear Search
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <InstanceTable 
+                        data={filteredEC2Data.map(instance => ({
+                          ...instance,
+                          // Normalize the field names to use consistent keys
+                          "Instance ID": instance["Instance ID"] || instance["InstanceId"],
+                          "Instance Type": instance["Instance Type"] || instance["InstanceType"],
+                          "Launch Time": instance["Launch Time"] || instance["LaunchTime"],
+                        }))} 
+                        keyField="Instance ID" 
+                        searchTerm={searchTerm}
+                        filters={filters}
+                        onClearFilters={clearFilters}
+                      />
                     )}
-                  </div>
-                ) : (
-                  <InstanceTable 
-                    data={filteredEC2Data.map(instance => ({
-                      ...instance,
-                      // Normalize the field names to use consistent keys
-                      "Instance ID": instance["Instance ID"] || instance["InstanceId"],
-                      "Instance Type": instance["Instance Type"] || instance["InstanceType"],
-                      "Launch Time": instance["Launch Time"] || instance["LaunchTime"],
-                    }))} 
-                    keyField="Instance ID" 
-                    searchTerm={searchTerm} 
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="rds">
-            <Card>
-              <CardHeader>
-                <CardTitle>RDS Instances</CardTitle>
-                <CardDescription>View and manage your RDS database instances across all regions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="ml-2">Loading RDS instances...</span>
-                  </div>
-                ) : filteredRDSData.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No RDS instances found matching your search criteria.</p>
-                    {searchTerm && (
-                      <Button
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => {
-                          setSearchTerm("")
-                          setFilteredRDSData(rdsData)
-                        }}
-                      >
-                        Clear Search
-                      </Button>
+              <TabsContent value="rds">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle>RDS Instances</CardTitle>
+                      <CardDescription>View and manage your RDS database instances across all regions</CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <Filter className="h-4 w-4" />
+                          Filters
+                          {Object.keys(filters || {}).length > 0 && (
+                            <span className="ml-1 rounded-full bg-primary w-5 h-5 text-xs flex items-center justify-center text-white">
+                              {Object.keys(filters || {}).length}
+                            </span>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {filterableFields.map(({ key, label }) => (
+                          <DropdownMenuItem key={key} className="flex flex-col items-start p-2">
+                            <div className="font-medium mb-1">{label}</div>
+                            <Select
+                              value={filters?.[key] || null}
+                              onValueChange={(value) => handleFilterChange(key, value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getUniqueValues(key).map((value) => (
+                                  <SelectItem key={value} value={value}>
+                                    {value}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-center justify-center text-destructive"
+                          onClick={clearFilters}
+                        >
+                          Clear all filters
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+
+                  {filters && Object.keys(filters).length > 0 && (
+                    <div className="px-6 py-2 border-b">
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(filters).map(([field, value]) => value && value !== 'all' && (
+                          <div key={field} className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded">
+                            <span>{field}: {value}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
+                              onClick={() => handleFilterChange(field, null)}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="ml-2">Loading RDS instances...</span>
+                      </div>
+                    ) : filteredRDSData.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No RDS instances found matching your search criteria.</p>
+                        {searchTerm && (
+                          <Button
+                            variant="outline"
+                            className="mt-2"
+                            onClick={() => {
+                              setSearchTerm("")
+                              setFilteredRDSData(rdsData)
+                            }}
+                          >
+                            Clear Search
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <InstanceTable 
+                        data={filteredRDSData} 
+                        keyField="DBInstanceIdentifier" 
+                        searchTerm={searchTerm}
+                        filters={filters}
+                        onClearFilters={clearFilters}
+                      />
                     )}
-                  </div>
-                ) : (
-                  <InstanceTable data={filteredRDSData} keyField="DBInstanceIdentifier" searchTerm={searchTerm} />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </main>
     </div>
   )

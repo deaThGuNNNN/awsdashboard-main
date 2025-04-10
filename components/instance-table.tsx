@@ -4,9 +4,16 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, Copy, ExternalLink, MoreHorizontal } from "lucide-react"
+import { ChevronDown, ChevronUp, Copy, ExternalLink, MoreHorizontal, Filter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -16,14 +23,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface InstanceTableProps {
   data: Record<string, any>[]
   keyField?: string
   searchTerm?: string
+  filters: Record<string, string>
+  onClearFilters: () => void
 }
 
-export default function InstanceTable({ data, keyField = "id", searchTerm = "" }: InstanceTableProps) {
+export default function InstanceTable({ data, keyField = "id", searchTerm = "", filters = {}, onClearFilters }: InstanceTableProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string
     direction: "ascending" | "descending"
@@ -88,10 +104,51 @@ export default function InstanceTable({ data, keyField = "id", searchTerm = "" }
     }
   }, [data, keyField])
 
-  // Sort data based on current sort configuration
-  const sortedData = [...data].sort((a, b) => {
-    if (!sortConfig) return 0
+  // Define filterable fields with more AWS-relevant options
+  const filterableFields = [
+    { key: "State", label: "State" },
+    { key: "Instance Type", label: "Instance Type" },
+    { key: "Environment", label: "Environment" },
+    { key: "Operating System_y", label: "Operating System" },
+    { key: "Application", label: "Application" }
+  ]
 
+  // Enhanced getUniqueValues to handle transformations
+  const getUniqueValues = (field: string) => {
+    const values = new Set<string>()
+    const fieldConfig = filterableFields.find(f => f.key === field)
+    
+    data.forEach(item => {
+      const value = item[field]
+      if (value !== null && value !== undefined && value !== '') {
+        if (fieldConfig?.transform) {
+          values.add(fieldConfig.transform(value))
+        } else {
+          values.add(String(value))
+        }
+      }
+    })
+    return Array.from(values).sort()
+  }
+
+  // Enhanced filtering logic to handle transformed values
+  const filteredData = data.filter(item => {
+    return Object.entries(filters).every(([key, filterValue]) => {
+      if (!filterValue || filterValue === 'all') return true
+      
+      const fieldConfig = filterableFields.find(f => f.key === key)
+      const itemValue = item[key]
+      
+      if (fieldConfig?.transform) {
+        return fieldConfig.transform(itemValue) === filterValue
+      }
+      return String(itemValue) === filterValue
+    })
+  })
+
+  // Sort filtered data
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig) return 0
     const { key, direction } = sortConfig
 
     if (a[key] === null || a[key] === undefined) return direction === "ascending" ? -1 : 1
@@ -101,14 +158,20 @@ export default function InstanceTable({ data, keyField = "id", searchTerm = "" }
       return direction === "ascending" ? a[key].localeCompare(b[key]) : b[key].localeCompare(a[key])
     }
 
-    if (a[key] < b[key]) {
-      return direction === "ascending" ? -1 : 1
-    }
-    if (a[key] > b[key]) {
-      return direction === "ascending" ? 1 : -1
-    }
-    return 0
+    return direction === "ascending" 
+      ? (a[key] < b[key] ? -1 : 1)
+      : (a[key] > b[key] ? -1 : 1)
   })
+
+  // Handle filter change
+  const handleFilterChange = (field: string, value: string | null) => {
+    // This function is now handled by the parent component
+  }
+
+  // Clear all filters
+  const clearFilters = () => {
+    // This function is now handled by the parent component
+  }
 
   // Handle column sort
   const requestSort = (key: string) => {
@@ -246,9 +309,59 @@ export default function InstanceTable({ data, keyField = "id", searchTerm = "" }
     return String(value)
   }
 
+  // Add summary statistics
+  const getFilterSummary = () => {
+    const total = filteredData.length
+    const running = filteredData.filter(i => 
+      (i.State || '').toLowerCase() === 'running' || 
+      (i.DBInstanceStatus || '').toLowerCase() === 'available'
+    ).length
+    const stopped = filteredData.filter(i => 
+      (i.State || '').toLowerCase().includes('stopped') ||
+      (i.DBInstanceStatus || '').toLowerCase().includes('stopped')
+    ).length
+
+    return { total, running, stopped }
+  }
+
+  const summary = getFilterSummary()
+
   return (
-    <>
+    <div>
+      {/* Summary stats */}
+      <div className="mb-4 grid grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm text-gray-500">Total Instances</div>
+          <div className="text-2xl font-bold">{summary.total}</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm text-gray-500">Running</div>
+          <div className="text-2xl font-bold text-green-600">{summary.running}</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm text-gray-500">Stopped</div>
+          <div className="text-2xl font-bold text-red-600">{summary.stopped}</div>
+        </div>
+      </div>
+
+      {/* Table content */}
       <div className="overflow-x-auto">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-semibold">
+            {/* If you have a table title, put it here */}
+          </div>
+          {filters && Object.keys(filters).length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onClearFilters}
+              className="text-destructive hover:text-destructive"
+            >
+              Clear all filters ({Object.keys(filters).length})
+            </Button>
+          )}
+        </div>
+
         <Table className="border-collapse w-full">
           <TableHeader className="bg-gray-50 sticky top-0">
             <TableRow>
@@ -273,40 +386,58 @@ export default function InstanceTable({ data, keyField = "id", searchTerm = "" }
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map((instance, rowIndex) => (
-              <TableRow key={`row-${instance[keyField] || rowIndex}`} className="border-b hover:bg-gray-50">
-                {visibleColumns.map((columnName, colIndex) => (
-                  <TableCell 
-                    key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`} 
-                    className="px-4 py-2 text-sm whitespace-nowrap"
-                  >
-                    {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
-                      ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
-                      : formatCellValue(getCellValue(instance, columnName), columnName)}
-                  </TableCell>
-                ))}
-                <TableCell className="px-4 py-2 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => copyToClipboard(instance[keyField])}>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy ID
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleViewDetails(instance)}>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View Details
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {sortedData.filter(item => {
+              return Object.entries(filters).every(([key, value]) => {
+                if (!value || value === 'all') return true
+                return String(item[key]) === value
+              })
+            }).length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8">
+                  <p className="text-gray-500">No instances match the current filters.</p>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              sortedData.filter(item => {
+                return Object.entries(filters).every(([key, value]) => {
+                  if (!value || value === 'all') return true
+                  return String(item[key]) === value
+                })
+              }).map((instance, rowIndex) => (
+                <TableRow key={`row-${instance[keyField] || rowIndex}`} className="border-b hover:bg-gray-50">
+                  {visibleColumns.map((columnName, colIndex) => (
+                    <TableCell 
+                      key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`} 
+                      className="px-4 py-2 text-sm whitespace-nowrap"
+                    >
+                      {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
+                        ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
+                        : formatCellValue(getCellValue(instance, columnName), columnName)}
+                    </TableCell>
+                  ))}
+                  <TableCell className="px-4 py-2 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => copyToClipboard(instance[keyField])}>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy ID
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewDetails(instance)}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -340,6 +471,6 @@ export default function InstanceTable({ data, keyField = "id", searchTerm = "" }
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }
