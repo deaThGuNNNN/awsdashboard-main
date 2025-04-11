@@ -23,7 +23,7 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-1">
           <Server className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold">AWS Dashboard</h1>
+          <h1 className="text-xl font-bold">Dashboard</h1>
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
