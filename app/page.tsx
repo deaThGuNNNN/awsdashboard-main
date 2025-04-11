@@ -223,7 +223,7 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle>Settings</CardTitle>
-              <CardDescription>Manage your AWS Dashboard settings</CardDescription>
+              <CardDescription>Manage your Dashboard settings</CardDescription>
             </CardHeader>
             <CardContent>
               {/* Add settings content here */}
@@ -244,7 +244,7 @@ export default function Home() {
         ) : (
           <>
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-              <h1 className="text-3xl font-bold">AWS Resources Dashboard</h1>
+              <h1 className="text-3xl font-bold">Instances Dashboard</h1>
             </div>
 
             <div className="mb-6 flex gap-2">
