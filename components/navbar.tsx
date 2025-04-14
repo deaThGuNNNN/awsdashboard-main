@@ -1,6 +1,6 @@
 "use client"
 
-import { RefreshCw, Settings, Database, Home, Server, BarChart } from "lucide-react"
+import { RefreshCw, Settings, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
@@ -15,7 +15,12 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
 
   const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
     e.preventDefault()
-    onTabChange(tab)
+    if (tab === 'dashboard') {
+      // Navigate to the root of the web app
+      router.push("/")
+    } else {
+      onTabChange(tab)
+    }
   }
 
   return (
