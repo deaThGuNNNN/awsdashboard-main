@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { RefreshCw, Settings, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 
 interface NavbarProps {
   onRefresh: () => void
@@ -12,13 +11,6 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProps) {
-  const router = useRouter()
-
-  const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
-    e.preventDefault()
-    onTabChange(tab)
-  }
-
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -28,30 +20,32 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          {/* Dashboard button navigates to "/" */}
+          {/* Dashboard button: using Link to navigate to "/" */}
           <Link href="/" passHref legacyBehavior>
-            <Button
-              variant="ghost"
-              className={`flex items-center space-x-1 ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-700'}`}
+            <a
+              className={`flex items-center space-x-1 ${activeTab === "dashboard" ? "text-primary" : "text-gray-700"}`}
+              // The Link component handles navigation so no onClick is needed here.
             >
-              <Home className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Button>
+              <Button variant="ghost">
+                <Home className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Button>
+            </a>
           </Link>
-          
-          {/* Other buttons invoke onTabChange */}
+
+          {/* Other tabs: use the onTabChange callback */}
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'settings' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('settings')}
+            className={`flex items-center space-x-1 ${activeTab === "settings" ? "text-primary" : "text-gray-700"}`}
+            onClick={() => onTabChange("settings")}
           >
             <Settings className="h-4 w-4" />
             <span>Settings</span>
           </Button>
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'analytics' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('analytics')}
+            className={`flex items-center space-x-1 ${activeTab === "analytics" ? "text-primary" : "text-gray-700"}`}
+            onClick={() => onTabChange("analytics")}
           >
             <BarChart className="h-4 w-4" />
             <span>Analytics</span>
