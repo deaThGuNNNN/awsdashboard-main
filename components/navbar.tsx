@@ -1,8 +1,8 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { RefreshCw, Settings, Home, Server, BarChart } from "lucide-react"
+import { RefreshCw, Settings, Database, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 interface NavbarProps {
   onRefresh: () => void
@@ -13,19 +13,17 @@ interface NavbarProps {
 export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProps) {
   const router = useRouter()
 
-  const handleDashboardClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    console.log("Dashboard button clicked")
+  const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
     e.preventDefault()
+    onTabChange(tab)
 
-    try {
-      // Attempt client-side navigation using Next.js router
-      router.push("/")
-      console.log("Using router.push('/')")
-    } catch (error) {
-      console.error("router.push failed. Falling back to window.location.href", error)
-      // Fall back to a full page reload navigation
-      window.location.href = "/"
+    // Navigate based on the tab clicked
+    if (tab === 'dashboard') {
+      router.push("/dashboard")
+    } else if (tab === 'instances') {
+      router.push("/mainp")
     }
+    // You can add further navigation logic for other tabs if needed
   }
 
   return (
@@ -37,29 +35,34 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          {/* Dashboard button uses our click handler for navigation */}
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === "dashboard" ? "text-primary" : "text-gray-700"}`}
-            onClick={handleDashboardClick}
+            className={`flex items-center space-x-1 ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('dashboard')}
           >
             <Home className="h-4 w-4" />
             <span>Dashboard</span>
           </Button>
-
-          {/* Other buttons continue to use onTabChange */}
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === "settings" ? "text-primary" : "text-gray-700"}`}
-            onClick={() => onTabChange("settings")}
+            className={`flex items-center space-x-1 ${activeTab === 'instances' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('instances')}
+          >
+            <Database className="h-4 w-4" />
+            <span>Instances</span>
+          </Button>
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === 'settings' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('settings')}
           >
             <Settings className="h-4 w-4" />
             <span>Settings</span>
           </Button>
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === "analytics" ? "text-primary" : "text-gray-700"}`}
-            onClick={() => onTabChange("analytics")}
+            className={`flex items-center space-x-1 ${activeTab === 'analytics' ? 'text-primary' : 'text-gray-700'}`}
+            onClick={handleTabClick('analytics')}
           >
             <BarChart className="h-4 w-4" />
             <span>Analytics</span>
@@ -67,12 +70,7 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </nav>
 
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRefresh}
-            className="flex items-center space-x-1"
-          >
+          <Button variant="outline" size="sm" onClick={onRefresh} className="flex items-center space-x-1">
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
