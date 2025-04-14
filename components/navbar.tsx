@@ -16,14 +16,6 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
   const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
     e.preventDefault()
     onTabChange(tab)
-
-    // Navigate based on the tab clicked
-    if (tab === 'dashboard') {
-      router.push("/dashboard")
-    } else if (tab === 'instances') {
-      router.push("/mainp")
-    }
-    // You can add further navigation logic for other tabs if needed
   }
 
   return (
@@ -42,14 +34,6 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
           >
             <Home className="h-4 w-4" />
             <span>Dashboard</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'instances' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('instances')}
-          >
-            <Database className="h-4 w-4" />
-            <span>Instances</span>
           </Button>
           <Button
             variant="ghost"
