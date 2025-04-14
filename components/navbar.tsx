@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { RefreshCw, Settings, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -15,12 +16,7 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
 
   const handleTabClick = (tab: string) => (e: React.MouseEvent) => {
     e.preventDefault()
-    if (tab === 'dashboard') {
-      // Navigate to the root of the web app
-      router.push("/")
-    } else {
-      onTabChange(tab)
-    }
+    onTabChange(tab)
   }
 
   return (
@@ -32,14 +28,18 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Button
-            variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('dashboard')}
-          >
-            <Home className="h-4 w-4" />
-            <span>Dashboard</span>
-          </Button>
+          {/* Dashboard button navigates to "/" */}
+          <Link href="/" passHref legacyBehavior>
+            <Button
+              variant="ghost"
+              className={`flex items-center space-x-1 ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-700'}`}
+            >
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
+            </Button>
+          </Link>
+          
+          {/* Other buttons invoke onTabChange */}
           <Button
             variant="ghost"
             className={`flex items-center space-x-1 ${activeTab === 'settings' ? 'text-primary' : 'text-gray-700'}`}
