@@ -37,22 +37,6 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
           </Button>
           <Button
             variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'ec2' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('ec2')}
-          >
-            <Server className="h-4 w-4" />
-            <span>EC2 Instances</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className={`flex items-center space-x-1 ${activeTab === 'rds' ? 'text-primary' : 'text-gray-700'}`}
-            onClick={handleTabClick('rds')}
-          >
-            <Database className="h-4 w-4" />
-            <span>RDS Instances</span>
-          </Button>
-          <Button
-            variant="ghost"
             className={`flex items-center space-x-1 ${activeTab === 'settings' ? 'text-primary' : 'text-gray-700'}`}
             onClick={handleTabClick('settings')}
           >
