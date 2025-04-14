@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { RefreshCw, Settings, Home, Server, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -11,6 +11,14 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProps) {
+  const router = useRouter()
+
+  const handleDashboardClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    // Navigate to the root page
+    router.push("/")
+  }
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -20,20 +28,17 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          {/* Dashboard button: using Link to navigate to "/" */}
-          <Link href="/" passHref legacyBehavior>
-            <a
-              className={`flex items-center space-x-1 ${activeTab === "dashboard" ? "text-primary" : "text-gray-700"}`}
-              // The Link component handles navigation so no onClick is needed here.
-            >
-              <Button variant="ghost">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Button>
-            </a>
-          </Link>
+          {/* Dashboard button uses router.push("/") */}
+          <Button
+            variant="ghost"
+            className={`flex items-center space-x-1 ${activeTab === "dashboard" ? "text-primary" : "text-gray-700"}`}
+            onClick={handleDashboardClick}
+          >
+            <Home className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Button>
 
-          {/* Other tabs: use the onTabChange callback */}
+          {/* Other buttons continue to use the onTabChange callback */}
           <Button
             variant="ghost"
             className={`flex items-center space-x-1 ${activeTab === "settings" ? "text-primary" : "text-gray-700"}`}
@@ -53,7 +58,12 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </nav>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={onRefresh} className="flex items-center space-x-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            className="flex items-center space-x-1"
+          >
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
