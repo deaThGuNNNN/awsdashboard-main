@@ -14,9 +14,18 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
   const router = useRouter()
 
   const handleDashboardClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log("Dashboard button clicked")
     e.preventDefault()
-    // Navigate to the root page
-    router.push("/")
+
+    try {
+      // Attempt client-side navigation using Next.js router
+      router.push("/")
+      console.log("Using router.push('/')")
+    } catch (error) {
+      console.error("router.push failed. Falling back to window.location.href", error)
+      // Fall back to a full page reload navigation
+      window.location.href = "/"
+    }
   }
 
   return (
@@ -28,7 +37,7 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          {/* Dashboard button uses router.push("/") */}
+          {/* Dashboard button uses our click handler for navigation */}
           <Button
             variant="ghost"
             className={`flex items-center space-x-1 ${activeTab === "dashboard" ? "text-primary" : "text-gray-700"}`}
@@ -38,7 +47,7 @@ export default function Navbar({ onRefresh, activeTab, onTabChange }: NavbarProp
             <span>Dashboard</span>
           </Button>
 
-          {/* Other buttons continue to use the onTabChange callback */}
+          {/* Other buttons continue to use onTabChange */}
           <Button
             variant="ghost"
             className={`flex items-center space-x-1 ${activeTab === "settings" ? "text-primary" : "text-gray-700"}`}
