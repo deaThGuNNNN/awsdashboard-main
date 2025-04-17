@@ -1,0 +1,240 @@
+[
+    {
+        "DBInstanceIdentifier": "synth-postgres-01",
+        "DBInstanceClass": "db.t3.medium",
+        "Engine": "postgres",
+        "EngineVersion": "14.2",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-postgres-01.xyz789abc123.us-west-1.rds.amazonaws.com",
+            "Port": 5432
+        },
+        "AllocatedStorage": 200,
+        "PreferredBackupWindow": "02:00-03:00",
+        "BackupRetentionPeriod": 14,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-9a8b7c6d5e4f",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "us-west-1a",
+        "MultiAZ": false,
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Testing"
+            }
+        ],
+        "StorageEncrypted": true,
+        "MonitoringInterval": 30,
+        "Region": "us-west-1"
+    },
+    {
+        "DBInstanceIdentifier": "synth-mysql-02",
+        "DBInstanceClass": "db.t3.small",
+        "Engine": "mysql",
+        "EngineVersion": "8.0.30",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-mysql-02.xyz789abc123.eu-central-1.rds.amazonaws.com",
+            "Port": 3306
+        },
+        "AllocatedStorage": 100,
+        "PreferredBackupWindow": "03:00-04:00",
+        "BackupRetentionPeriod": 7,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-8b7a6c5d4e3f",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "eu-central-1a",
+        "MultiAZ": true,
+        "AutoMinorVersionUpgrade": false,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Development"
+            }
+        ],
+        "StorageEncrypted": false,
+        "MonitoringInterval": 0,
+        "Region": "eu-central-1"
+    },
+    {
+        "DBInstanceIdentifier": "synth-aurora-01",
+        "DBInstanceClass": "db.r5.2xlarge",
+        "Engine": "aurora-mysql",
+        "EngineVersion": "5.7.12",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-aurora-01.xyz789abc123.ap-southeast-1.rds.amazonaws.com",
+            "Port": 3306
+        },
+        "AllocatedStorage": 0,
+        "PreferredBackupWindow": "04:00-05:00",
+        "BackupRetentionPeriod": 10,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-7c6d5e4f3a2b",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "ap-southeast-1a",
+        "MultiAZ": true,
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Staging"
+            }
+        ],
+        "StorageEncrypted": true,
+        "MonitoringInterval": 60,
+        "Region": "ap-southeast-1"
+    },
+    {
+        "DBInstanceIdentifier": "synth-sqlserver-01",
+        "DBInstanceClass": "db.m5.large",
+        "Engine": "sqlserver-ex",
+        "EngineVersion": "15.0.1",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-sqlserver-01.xyz789abc123.us-east-2.rds.amazonaws.com",
+            "Port": 1433
+        },
+        "AllocatedStorage": 300,
+        "PreferredBackupWindow": "01:00-02:00",
+        "BackupRetentionPeriod": 21,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-5e4f3a2b1c9d",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "us-east-2a",
+        "MultiAZ": true,
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Production"
+            }
+        ],
+        "StorageEncrypted": true,
+        "MonitoringInterval": 60,
+        "Region": "us-east-2"
+    },
+    {
+        "DBInstanceIdentifier": "synth-oracle-01",
+        "DBInstanceClass": "db.r5.xlarge",
+        "Engine": "oracle-ee",
+        "EngineVersion": "19.0.0",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-oracle-01.xyz789abc123.eu-west-1.rds.amazonaws.com",
+            "Port": 1521
+        },
+        "AllocatedStorage": 500,
+        "PreferredBackupWindow": "02:00-03:00",
+        "BackupRetentionPeriod": 30,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-4c5d3e2f1a9b",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "eu-west-1a",
+        "MultiAZ": true,
+        "AutoMinorVersionUpgrade": false,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Staging"
+            }
+        ],
+        "StorageEncrypted": true,
+        "MonitoringInterval": 0,
+        "Region": "eu-west-1"
+    },
+    {
+        "DBInstanceIdentifier": "synth-mariadb-01",
+        "DBInstanceClass": "db.t3.small",
+        "Engine": "mariadb",
+        "EngineVersion": "10.5.9",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-mariadb-01.xyz789abc123.ap-northeast-1.rds.amazonaws.com",
+            "Port": 3306
+        },
+        "AllocatedStorage": 150,
+        "PreferredBackupWindow": "03:00-04:00",
+        "BackupRetentionPeriod": 14,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-3a2b1d9e8f7c",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "ap-northeast-1a",
+        "MultiAZ": false,
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Development"
+            }
+        ],
+        "StorageEncrypted": false,
+        "MonitoringInterval": 0,
+        "Region": "ap-northeast-1"
+    },
+    {
+        "DBInstanceIdentifier": "synth-postgres-02",
+        "DBInstanceClass": "db.m6g.large",
+        "Engine": "postgres",
+        "EngineVersion": "13.7",
+        "DBInstanceStatus": "available",
+        "MasterUsername": "syadmin",
+        "Endpoint": {
+            "Address": "synth-postgres-02.xyz789abc123.sa-east-1.rds.amazonaws.com",
+            "Port": 5432
+        },
+        "AllocatedStorage": 250,
+        "PreferredBackupWindow": "04:00-05:00",
+        "BackupRetentionPeriod": 7,
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-2f1a3b9d8c7e",
+                "Status": "active"
+            }
+        ],
+        "AvailabilityZone": "sa-east-1a",
+        "MultiAZ": true,
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "Tags": [
+            {
+                "Key": "Environment",
+                "Value": "Testing"
+            }
+        ],
+        "StorageEncrypted": true,
+        "MonitoringInterval": 60,
+        "Region": "sa-east-1"
+    }
+]
