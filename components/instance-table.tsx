@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
+import { useState, useEffect, forwardRef, useImperativeHandle, useMemo } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   DropdownMenu,
@@ -37,19 +37,27 @@ export interface InstanceTableRef {
 }
 
 interface InstanceTableProps {
-  data: Record<string, any>[]
-  keyField?: string
+  data: any[]
+  keyField: string
   searchTerm?: string
-  filters: Record<string, string>
-  onClearFilters: () => void
+  visibleColumns?: string[]
+  filters?: Record<string, string>
+  onClearFilters?: () => void
+  sortConfig?: {
+    key: string
+    direction: 'asc' | 'desc'
+  }
 }
 
-const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, keyField = "id", searchTerm = "", filters = {}, onClearFilters }, ref) => {
-  const [sortConfig, setSortConfig] = useState<{
-    key: string
-    direction: "ascending" | "descending"
-  } | null>(null)
-
+const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ 
+  data = [], 
+  keyField = "id", 
+  searchTerm = "", 
+  visibleColumns: propVisibleColumns,
+  filters = {}, 
+  onClearFilters,
+  sortConfig
+}, ref) => {
   const [visibleColumns, setVisibleColumns] = useState<string[]>([])
 
   const router = useRouter()
@@ -60,8 +68,11 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
 
   const [isDrawing, setIsDrawing] = useState(false);
 
+  // Initialize visible columns from props or generate them from data
   useEffect(() => {
-    if (data.length > 0) {
+    if (propVisibleColumns) {
+      setVisibleColumns(propVisibleColumns);
+    } else if (data.length > 0) {
       const allKeys = Object.keys(data[0]).filter(
         (key) => typeof data[0][key] !== "object" || data[0][key] === null,
       )
@@ -91,10 +102,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
         .filter(([normalizedName, possibleNames]) => 
           possibleNames.some(name => allKeys.includes(name))
         )
-        .map(([normalizedName]) => {
-          columnMap.set(normalizedName, true)
-          return normalizedName
-        })
+        .map(([normalizedName]) => normalizedName)
 
       // Add remaining columns that aren't already included
       const otherColumns = allKeys
@@ -109,7 +117,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
 
       setVisibleColumns([...priorityColumns, ...otherColumns])
     }
-  }, [data, keyField])
+  }, [data, propVisibleColumns])
 
   // Handle drawing state
   useEffect(() => {
@@ -159,37 +167,54 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
     return Array.from(values).sort()
   }
 
-  // Enhanced filtering logic to handle transformed values
-  const filteredData = data.filter(item => {
-    return Object.entries(filters).every(([key, filterValue]) => {
-      if (!filterValue || filterValue === 'all') return true
-      
-      const fieldConfig = filterableFields.find(f => f.key === key)
-      const itemValue = item[key]
-      
-      if (fieldConfig?.transform) {
-        return fieldConfig.transform(itemValue) === filterValue
-      }
-      return String(itemValue) === filterValue
-    })
-  })
+  // Apply filters and sorting
+  const filteredData = useMemo(() => {
+    let result = [...data]
 
-  // Sort filtered data
-  const sortedData = [...filteredData].sort((a, b) => {
-    if (!sortConfig) return 0
-    const { key, direction } = sortConfig
-
-    if (a[key] === null || a[key] === undefined) return direction === "ascending" ? -1 : 1
-    if (b[key] === null || b[key] === undefined) return direction === "ascending" ? 1 : -1
-
-    if (typeof a[key] === "string" && typeof b[key] === "string") {
-      return direction === "ascending" ? a[key].localeCompare(b[key]) : b[key].localeCompare(a[key])
+    // Apply filters
+    if (Object.keys(filters).length > 0) {
+      result = result.filter(item => {
+        return Object.entries(filters).every(([key, value]) => {
+          const itemValue = item[key]
+          return itemValue && String(itemValue).toLowerCase() === String(value).toLowerCase()
+        })
+      })
     }
 
-    return direction === "ascending" 
-      ? (a[key] < b[key] ? -1 : 1)
-      : (a[key] > b[key] ? -1 : 1)
-  })
+    // Apply search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      result = result.filter(item => {
+        return Object.entries(item).some(([key, value]) => {
+          if (value === null || value === undefined) return false
+          return String(value).toLowerCase().includes(searchLower)
+        })
+      })
+    }
+
+    // Apply sorting if configured
+    if (sortConfig) {
+      const { key, direction } = sortConfig
+      result.sort((a, b) => {
+        let aValue = a[key] || ''
+        let bValue = b[key] || ''
+        
+        // Handle date fields
+        if (key === 'launch_time') {
+          aValue = new Date(a['Launch Time'] || a['LaunchTime'] || 0).getTime()
+          bValue = new Date(b['Launch Time'] || b['LaunchTime'] || 0).getTime()
+        }
+        
+        if (direction === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+    }
+
+    return result
+  }, [data, filters, searchTerm, sortConfig])
 
   // Handle filter change
   const handleFilterChange = (field: string, value: string | null) => {
@@ -452,78 +477,65 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
             </div>
           </div>
 
-          <div className="border rounded-lg">
-            <div className="relative h-[600px] flex flex-col">
-              {/* Fixed Header */}
-              <div className="w-full">
-                <div className="min-w-full divide-y divide-gray-200">
-                  <div className="bg-white">
-                    <div className="flex">
+          <div className="relative flex flex-col bg-white rounded-lg border">
+            <div className="overflow-x-auto">
+              <div className="inline-block min-w-full align-middle">
+                {/* Fixed Header */}
+                <table className="min-w-full">
+                  <thead className="bg-gray-100 border-b">
+                    <tr>
                       {visibleColumns.map((columnName, index) => (
-                        <div
+                        <th
                           key={`header-${columnName}-${index}`}
                           className={cn(
-                            "border-b border-gray-200 bg-white bg-opacity-100 px-4 py-3 text-left text-sm font-semibold text-gray-900",
+                            "px-4 py-3 text-left text-sm font-semibold text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-gray-100",
                             sortConfig?.key === columnName ? "bg-gray-50" : ""
                           )}
-                          style={{ minWidth: columnName === "Instance ID" ? "200px" : "150px", flex: 1 }}
                           onClick={() => requestSort(columnName)}
                         >
                           <div className="flex items-center gap-2">
                             <span>{columnName}</span>
                             {getSortDirectionIndicator(columnName)}
                           </div>
-                        </div>
+                        </th>
                       ))}
-                      <div
-                        className="border-b border-gray-200 bg-white bg-opacity-100 px-4 py-3 text-right text-sm font-semibold text-gray-900"
-                        style={{ width: "100px" }}
-                      >
-                        <span className="sr-only">Actions</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-gray-100">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                </table>
 
-              {/* Scrollable Content */}
-              <div className="flex-1 overflow-auto scroll-container">
-                <div className="min-w-full divide-y divide-gray-200">
-                  <div className="divide-y divide-gray-200 bg-white">
-                    {sortedData.filter(item => {
-                      return Object.entries(filters).every(([key, value]) => {
-                        if (!value || value === 'all') return true
-                        return String(item[key]) === value
-                      })
-                    }).length === 0 ? (
-                      <div className="table-cell px-4 py-4 text-center text-sm text-gray-500">
-                        <p>No instances match the current filters.</p>
-                      </div>
-                    ) : (
-                      sortedData
-                        .filter(item => {
-                          return Object.entries(filters).every(([key, value]) => {
-                            if (!value || value === 'all') return true
-                            return String(item[key]) === value
-                          })
-                        })
-                        .map((instance, rowIndex) => (
-                          <div 
+                {/* Scrollable Body */}
+                <div className="overflow-y-auto scrollbar-thin" style={{ height: "520px" }}>
+                  <table className="min-w-full">
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredData.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={visibleColumns.length + 1}
+                            className="px-4 py-8 text-center text-gray-500"
+                          >
+                            No instances match the current filters
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredData.map((instance, rowIndex) => (
+                          <tr
                             key={`row-${instance[keyField] || rowIndex}`}
-                            className="flex hover:bg-gray-50"
+                            className="hover:bg-gray-50"
                           >
                             {visibleColumns.map((columnName, colIndex) => (
-                              <div
+                              <td
                                 key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`}
-                                className="table-cell whitespace-nowrap px-4 py-2 text-sm text-gray-900"
-                                style={{ minWidth: columnName === "Instance ID" ? "200px" : "150px", flex: 1 }}
+                                className="px-4 py-3 text-sm text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap"
                               >
                                 {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
                                   ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
                                   : formatCellValue(getCellValue(instance, columnName), columnName)}
-                              </div>
+                              </td>
                             ))}
-                            <div className="whitespace-nowrap px-4 py-2 text-right text-sm" style={{ width: "100px" }}>
+                            <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="sm">
@@ -542,21 +554,20 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
-                            </div>
-                          </div>
+                            </td>
+                          </tr>
                         ))
-                    )}
-                  </div>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
 
-              {/* Fixed Footer */}
-              <div className="w-full">
-                <div className="min-w-full divide-y divide-gray-200">
-                  <div className="bg-gray-50">
-                    <div className="flex">
+                {/* Fixed Footer */}
+                <table className="min-w-full">
+                  <tfoot className="bg-gray-100 border-t">
+                    <tr>
                       {visibleColumns.map((columnName, index) => {
-                        const sum = sortedData.reduce((acc, item) => {
+                        const sum = filteredData.reduce((acc, item) => {
                           const value = getCellValue(item, columnName);
                           if (typeof value === 'number') {
                             return acc + value;
@@ -570,16 +581,15 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
                           return acc;
                         }, 0);
 
-                        const shouldShowSum = sortedData.some(item => {
+                        const shouldShowSum = filteredData.some(item => {
                           const value = getCellValue(item, columnName);
                           return typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)));
                         });
 
                         return (
-                          <div
+                          <td
                             key={`footer-${columnName}-${index}`}
-                            className="table-cell border-t border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap"
-                            style={{ minWidth: columnName === "Instance ID" ? "200px" : "150px", flex: 1 }}
+                            className="px-4 py-3 text-sm font-semibold text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-gray-100"
                           >
                             {shouldShowSum ? (
                               <span className="font-semibold">
@@ -587,18 +597,16 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
                               </span>
                             ) : columnName === "State" ? (
                               <span className="font-semibold">
-                                Total Rows: {sortedData.length}
+                                Total Rows: {filteredData.length}
                               </span>
                             ) : null}
-                          </div>
+                          </td>
                         );
                       })}
-                      <div className="table-cell border-t border-gray-200 px-4 py-3 text-right" style={{ width: "100px" }}>
-                        {/* Empty cell for actions column */}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-gray-100"></td>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             </div>
           </div>
@@ -634,6 +642,32 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({ data, 
           )}
         </DialogContent>
       </Dialog>
+
+      <style jsx global>{`
+        /* Webkit browsers custom scrollbar */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background-color: #E5E7EB;
+          border-radius: 2px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background-color: #D1D5DB;
+        }
+
+        /* Firefox custom scrollbar */
+        .scrollbar-thin {
+          scrollbar-width: thin;
+          scrollbar-color: #E5E7EB transparent;
+        }
+      `}</style>
     </div>
   )
 })

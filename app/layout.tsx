@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import LayoutContent from '@/components/layout-content'
 
 export const metadata: Metadata = {
   title: 'Dashboard App',
@@ -12,7 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LayoutContent>{children}</LayoutContent>
+      </body>
     </html>
   )
 }
