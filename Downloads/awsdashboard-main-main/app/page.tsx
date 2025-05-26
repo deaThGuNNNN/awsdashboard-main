@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useCallback, useRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from "@/components/ui/input"
+import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { InfoIcon, Loader2, RefreshCw, Search, Filter, Download, ArrowLeft, ArrowUpDown } from "lucide-react"
 import Navbar from "@/components/navbar"
