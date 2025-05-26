@@ -1,8 +1,8 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
+import { Button } from '../../../components/ui/button'
 import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { mockEC2Data, mockRDSData } from "@/lib/mock-data"

@@ -1,11 +1,11 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Badge } from "@/components/ui/badge"
 import { BarChart as BarChartIcon, Server, Cloud, Box, Activity, Filter, ChevronDown } from "lucide-react"
 import { useEffect, useState, useMemo } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from './ui/button'
 
 interface AnalyticsProps {
   isTableView: boolean
