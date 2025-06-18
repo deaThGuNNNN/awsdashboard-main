@@ -2,10 +2,10 @@
 
 import type React from "react"
 import { useState, useCallback, useRef } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Button } from '../components/ui/button'
 import { InfoIcon, Loader2, RefreshCw, Search, Filter, Download, ArrowLeft, ArrowUpDown } from "lucide-react"
 import Navbar from "@/components/navbar"
 import InstanceTable, { InstanceTableRef } from "@/components/instance-table"
@@ -365,17 +365,8 @@ export default function Home() {
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value
-    setSearchTerm(newSearchTerm)
-
-    // Auto-search after a short delay if the search term is long enough
-    if (newSearchTerm.length >= 3 || newSearchTerm.length === 0) {
-      const debounceTimer = setTimeout(() => {
-        filterData(newSearchTerm)
-      }, 300)
-
-      return () => clearTimeout(debounceTimer)
-    }
+    setSearchTerm(e.target.value)
+    filterData(e.target.value)
   }
 
   // Handle search on Enter key press
@@ -419,168 +410,67 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar 
-        onRefresh={handleRefresh} 
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
-
-      <main className="container mx-auto py-6 px-4 flex-grow">
-        {activeTab === 'analytics' ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Dashboard</CardTitle>
-              <CardDescription>Analyze your AWS resources usage and patterns</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Analytics ec2Data={ec2Data} rdsData={rdsData} />
-            </CardContent>
-          </Card>
-        ) : activeTab === 'settings' ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Settings</CardTitle>
-              <CardDescription>Manage your Dashboard settings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Add settings content here */}
-              <div className="text-gray-500">Settings page coming soon...</div>
-            </CardContent>
-          </Card>
-        ) : activeTab === 'dashboard' ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Dashboard Overview</CardTitle>
-              <CardDescription>View your AWS resources at a glance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Add dashboard content here */}
-              <div className="text-gray-500">Dashboard overview coming soon...</div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-              <h1 className="text-3xl font-bold">Instances Dashboard</h1>
-            </div>
-
-            <div className="mb-6 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="text"
-                  placeholder="Search instances..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onKeyDown={handleKeyDown}
-                />
+    <div className="flex flex-col h-screen">
+      <div className="flex-1 overflow-hidden">
+        {!isTableView && !isEC2View && !isRDSView ? (
+          <div className="container mx-auto py-4 h-full overflow-auto">
+            <Analytics
+              isTableView={isTableView}
+              isEC2View={isEC2View}
+              isRDSView={isRDSView}
+            />
+          </div>
+        ) : isTableView ? (
+          <div className="container mx-auto pb-2 pt-4 h-full overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center w-full">
+                <div className="relative flex items-center w-full">
+                  <Search className="absolute left-3 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Search instances..."
+                    className="pl-9 pr-4 w-full"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleKeyDown}
+                  />
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSearch}
+                    className="ml-2"
+                  >
+                    Search
+                  </Button>
+                </div>
               </div>
-              <Button onClick={handleSearch}>Search</Button>
             </div>
 
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="ec2">EC2 Instances ({filteredEC2Data.length})</TabsTrigger>
-                <TabsTrigger value="rds">RDS Instances ({filteredRDSData.length})</TabsTrigger>
+            <Tabs defaultValue="ec2" className="space-y-0" onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="ec2">
+                  EC2 Instances ({filteredEC2Data.length})
+                </TabsTrigger>
+                <TabsTrigger value="rds">
+                  RDS Instances ({filteredRDSData.length})
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="ec2">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div>
-                      <CardTitle>EC2 Instances</CardTitle>
-                      <CardDescription>View and manage your EC2 instances across all regions</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filters
-                            {Object.keys(filters || {}).length > 0 && (
-                              <span className="ml-1 rounded-full bg-primary w-5 h-5 text-xs flex items-center justify-center text-white">
-                                {Object.keys(filters || {}).length}
-                              </span>
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          {filterableFields.map(({ key, label }) => (
-                            <DropdownMenuItem key={key} className="flex flex-col items-start p-2">
-                              <div className="font-medium mb-1">{label}</div>
-                              <Select
-                                value={filters?.[key] || null}
-                                onValueChange={(value) => handleFilterChange(key, value)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getUniqueValues(key).map((value) => (
-                                    <SelectItem key={value} value={value}>
-                                      {value}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-center justify-center text-destructive"
-                            onClick={() => {
-                              setFilters({})
-                              setFilteredEC2Data(ec2Data)
-                            }}
-                          >
-                            Clear all filters
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Download className="h-4 w-4" />
-                            Export
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => ec2TableRef.current?.exportToCSV()}>
-                            Export as CSV
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => ec2TableRef.current?.exportToJSON()}>
-                            Export as JSON
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              <TabsContent value="ec2" className="space-y-0 pt-4">
+                <Card className="h-[calc(100vh-220px)] flex flex-col overflow-hidden">
+                  <CardHeader className="space-y-1 flex-shrink-0 pb-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>EC2 Instances</CardTitle>
+                        <CardDescription>
+                          View and manage your EC2 instances across all regions
+                        </CardDescription>
+                      </div>
+                      {renderFilterAndSortButtons('ec2')}
                     </div>
                   </CardHeader>
 
-                  {filters && Object.keys(filters).length > 0 && (
-                    <div className="px-6 py-2 border-b">
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(filters).map(([field, value]) => value && value !== 'all' && (
-                          <div key={field} className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                            <span>{field}: {value}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-transparent"
-                              onClick={() => handleFilterChange(field, null)}
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <CardContent>
+                  <CardContent className="pb-0 pt-0 flex-1 overflow-hidden">
                     {isLoading ? (
                       <div className="flex justify-center items-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -603,15 +493,10 @@ export default function Home() {
                         )}
                       </div>
                     ) : (
-                      <div className="h-[calc(100vh-300px)] overflow-auto">
+                      <div className="h-full">
                         <InstanceTable 
                           ref={ec2TableRef}
-                          data={filteredEC2Data.map(instance => ({
-                            ...instance,
-                            "Instance ID": instance["Instance ID"] || instance["InstanceId"],
-                            "Instance Type": instance["Instance Type"] || instance["InstanceType"],
-                            "Launch Time": instance["Launch Time"] || instance["LaunchTime"],
-                          }))} 
+                          data={filteredEC2Data} 
                           keyField="Instance ID" 
                           searchTerm={searchTerm}
                           filters={filters}
@@ -626,101 +511,21 @@ export default function Home() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="rds">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div>
-                      <CardTitle>RDS Instances</CardTitle>
-                      <CardDescription>View and manage your RDS database instances across all regions</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filters
-                            {Object.keys(filters || {}).length > 0 && (
-                              <span className="ml-1 rounded-full bg-primary w-5 h-5 text-xs flex items-center justify-center text-white">
-                                {Object.keys(filters || {}).length}
-                              </span>
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          {filterableFields.map(({ key, label }) => (
-                            <DropdownMenuItem key={key} className="flex flex-col items-start p-2">
-                              <div className="font-medium mb-1">{label}</div>
-                              <Select
-                                value={filters?.[key] || null}
-                                onValueChange={(value) => handleFilterChange(key, value)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getUniqueValues(key).map((value) => (
-                                    <SelectItem key={value} value={value}>
-                                      {value}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-center justify-center text-destructive"
-                            onClick={() => {
-                              setFilters({})
-                              setFilteredRDSData(rdsData)
-                            }}
-                          >
-                            Clear all filters
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Download className="h-4 w-4" />
-                            Export
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => rdsTableRef.current?.exportToCSV()}>
-                            Export as CSV
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => rdsTableRef.current?.exportToJSON()}>
-                            Export as JSON
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              <TabsContent value="rds" className="space-y-0 pt-4">
+                <Card className="h-[calc(100vh-220px)] flex flex-col overflow-hidden">
+                  <CardHeader className="space-y-1 flex-shrink-0 pb-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>RDS Instances</CardTitle>
+                        <CardDescription>
+                          View and manage your RDS instances across all regions
+                        </CardDescription>
+                      </div>
+                      {renderFilterAndSortButtons('rds')}
                     </div>
                   </CardHeader>
 
-                  {filters && Object.keys(filters).length > 0 && (
-                    <div className="px-6 py-2 border-b">
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(filters).map(([field, value]) => value && value !== 'all' && (
-                          <div key={field} className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                            <span>{field}: {value}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 hover:bg-transparent"
-                              onClick={() => handleFilterChange(field, null)}
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <CardContent>
+                  <CardContent className="pb-0 pt-0 flex-1 overflow-hidden">
                     {isLoading ? (
                       <div className="flex justify-center items-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -743,7 +548,7 @@ export default function Home() {
                         )}
                       </div>
                     ) : (
-                      <div className="h-[calc(100vh-300px)] overflow-auto">
+                      <div className="h-full">
                         <InstanceTable 
                           ref={rdsTableRef}
                           data={filteredRDSData} 
@@ -761,9 +566,50 @@ export default function Home() {
                 </Card>
               </TabsContent>
             </Tabs>
-          </>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {isEC2View && (
+              <div>
+                <h2 className="text-2xl font-bold mb-4">EC2 Instances</h2>
+                <InstanceTable
+                  data={ec2Data}
+                  keyField="Instance ID"
+                  visibleColumns={[
+                    "Instance ID",
+                    "Instance Type",
+                    "State",
+                    "Platform",
+                    "Private IP",
+                    "Public IP",
+                  ]}
+                  filters={{}}
+                  onClearFilters={() => {}}
+                />
+              </div>
+            )}
+            {isRDSView && (
+              <div>
+                <h2 className="text-2xl font-bold mb-4">RDS Instances</h2>
+                <InstanceTable
+                  data={rdsData}
+                  keyField="DB Instance ID"
+                  visibleColumns={[
+                    "DB Instance ID",
+                    "DB Instance Class",
+                    "Status",
+                    "Engine",
+                    "Endpoint",
+                    "Port",
+                  ]}
+                  filters={{}}
+                  onClearFilters={() => {}}
+                />
+              </div>
+            )}
+          </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }
