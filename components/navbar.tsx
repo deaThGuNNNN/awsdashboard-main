@@ -2,8 +2,10 @@
 
 import { RefreshCw, Settings, Database, Server, BarChart, Table2, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 
 interface NavbarProps {
   isTableView: boolean
@@ -104,6 +106,22 @@ export default function Navbar({
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="cursor-pointer">
+                <Avatar className="h-12 w-12 border-2 border-gray-200 shadow-md transition-transform hover:scale-105 hover:border-primary">
+                  <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 mt-2">
+              <DropdownMenuItem>Profile</DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-red-600">Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
