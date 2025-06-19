@@ -790,46 +790,48 @@ function BasketSidebar({
         </div>
 
         {/* Footer */}
-        {items.length > 0 && (
-          <div className="border-t border-gray-100 p-6 space-y-4">
-            {/* Total */}
-            <div className="flex items-center justify-between py-2">
-              <span className="text-lg font-medium text-gray-900">Total</span>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">${total.toFixed(2)}</div>
-                <div className="text-sm text-gray-500">per hour</div>
+        <div className="border-t border-gray-100 p-6 space-y-4">
+          {items.length > 0 && (
+            <>
+              {/* Total */}
+              <div className="flex items-center justify-between py-2">
+                <span className="text-lg font-medium text-gray-900">Total</span>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">${total.toFixed(2)}</div>
+                  <div className="text-sm text-gray-500">per hour</div>
+                </div>
               </div>
-            </div>
+            </>
+          )}
 
-            {/* Session Name Input */}
-            <Input 
-              type="text" 
-              placeholder="Session name (optional)" 
-              value={sessionName} 
-              onChange={e => setSessionName(e.target.value)} 
-              className="bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200" 
-            />
+          {/* Session Name Input */}
+          <Input 
+            type="text" 
+            placeholder="Session name (optional)" 
+            value={sessionName} 
+            onChange={e => setSessionName(e.target.value)} 
+            className="bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200" 
+          />
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button 
-                onClick={onSave}
-                disabled={items.length === 0}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-              >
-                Save Session
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleClearClick}
-                disabled={items.length === 0}
-                className="hover:bg-gray-50"
-              >
-                Clear
-              </Button>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button 
+              onClick={onSave}
+              disabled={items.length === 0}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+            >
+              Save Session
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleClearClick}
+              disabled={items.length === 0}
+              className="hover:bg-gray-50"
+            >
+              Clear
+            </Button>
           </div>
-        )}
+        </div>
       </div>
 
       <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
