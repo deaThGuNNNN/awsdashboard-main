@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
   "name": "aws-dashboard",
-=======
-  "name": "my-v0-project",
->>>>>>> 4aab5e510c26744bc68cb1c202829fd4078e092a
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -48,11 +44,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
-<<<<<<< HEAD
     "date-fns": "3.0.0",
-=======
-    "date-fns": "4.1.0",
->>>>>>> 4aab5e510c26744bc68cb1c202829fd4078e092a
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
