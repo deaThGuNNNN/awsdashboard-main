@@ -649,6 +649,7 @@ function BasketSidebar({
   onClear 
 }: any) {
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleClearClick = () => {
     setClearDialogOpen(true);
@@ -659,95 +660,187 @@ function BasketSidebar({
     setClearDialogOpen(false);
   };
 
+  if (isCollapsed) {
+    return (
+      <div className="w-16 bg-white/95 backdrop-blur-md border-l border-gray-200/50 flex flex-col items-center py-4 shadow-xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(false)}
+          className="mb-4 hover:bg-gray-100"
+        >
+          <ShoppingCart className="w-5 h-5" />
+        </Button>
+        {items.length > 0 && (
+          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+            {items.length}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
-      <aside className="w-full max-w-xs min-w-[320px] bg-gradient-to-b from-gray-100 to-white border-l border-gray-200 flex flex-col h-full sticky top-0 z-10 shadow-xl rounded-l-3xl">
-        <div className="flex items-center gap-2 px-6 py-5 rounded-t-3xl bg-gradient-to-r from-black to-gray-800 text-white shadow-md">
-          <ShoppingCart className="w-6 h-6" />
-          <h2 className="text-xl font-extrabold tracking-wide">Current Cart</h2>
+      <div className="w-96 bg-white/95 backdrop-blur-md border-l border-gray-200/50 flex flex-col shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Cart</h2>
+              <p className="text-sm text-gray-500">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(true)}
+            className="hover:bg-gray-100"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
-        <div className="flex-1 px-5 py-4 overflow-y-auto bg-transparent">
+
+        {/* Items List */}
+        <div className="flex-1 overflow-y-auto">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-              <Box className="w-12 h-12 mb-2" />
-              <span className="text-base text-center">Add services to your cart by selecting them from the list.</span>
+            <div className="flex flex-col items-center justify-center h-64 px-6">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                <Box className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
+              <p className="text-sm text-gray-500 text-center">
+                Add services from the catalog to get started with cost estimation
+              </p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <div className="p-4 space-y-3">
               {items.map((item: any) => (
-                <li key={item["Instance Type"]} className="flex items-center justify-between bg-white rounded-2xl p-4 border border-gray-100 shadow-md hover:shadow-lg transition-all">
-                  <div className="flex items-center gap-3">
-                    <Server className="w-6 h-6 text-gray-700" />
-                    <div>
-                      <div className="font-bold text-black text-base mb-1">{item["Instance Type"]}</div>
-                      <div className="text-xs text-gray-500 flex gap-2 mb-1">
-                        <Cpu className="w-3 h-3" />{item.vCPU} <Database className="w-3 h-3" />{item.Memory}
+                <div key={item["Instance Type"]} className="group bg-gray-50/80 hover:bg-gray-50 rounded-xl p-4 transition-all duration-200 border border-transparent hover:border-gray-200">
+                  {/* Item Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate">{item["Instance Type"]}</h4>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Cpu className="w-3 h-3" />
+                          {item.vCPU} vCPU
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Database className="w-3 h-3" />
+                          {item.Memory}
+                        </span>
                       </div>
-                      <Input
-                        type="text"
-                        placeholder="Add a tag or note..."
-                        value={String(item.note ?? "")}
-                        onChange={e => onNoteChange(item["Instance Type"], e.target.value)}
-                        className="mt-1 text-xs w-40 bg-gray-50 border-gray-200 rounded-md"
-                      />
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemove(item["Instance Type"])}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600 w-8 h-8"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div className="flex flex-col items-end gap-2 min-w-[120px]">
+
+                  {/* Quantity Controls */}
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 text-black" aria-label="Decrease quantity" onClick={() => onQuantityChange(item["Instance Type"], Math.max(1, item.quantity - 1))}><Minus className="w-4 h-4" /></button>
-                      <input type="number" min={1} value={String(item.quantity)} onChange={e => onQuantityChange(item["Instance Type"], parseInt(e.target.value) || 1)} className="w-10 text-center border border-gray-300 rounded px-1 py-0.5 focus:ring-2 focus:ring-black" />
-                      <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 text-black" aria-label="Increase quantity" onClick={() => onQuantityChange(item["Instance Type"], item.quantity + 1)}><Plus className="w-4 h-4" /></button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onQuantityChange(item["Instance Type"], Math.max(1, item.quantity - 1))}
+                        className="w-8 h-8 hover:bg-gray-100"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </Button>
+                      <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onQuantityChange(item["Instance Type"], item.quantity + 1)}
+                        className="w-8 h-8 hover:bg-gray-100"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
                     </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-base font-mono text-black font-bold">${(parseFloat(item.OnDemand) * item.quantity).toFixed(2)}</span>
-                      <span className="text-xs text-gray-500">/hr</span>
+                    
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">
+                        ${(parseFloat(item.OnDemand) * item.quantity).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">per hour</div>
                     </div>
-                    <button className="mt-2 p-1 rounded-full hover:bg-red-100 text-red-500" aria-label="Remove" title="Remove" onClick={() => onRemove(item["Instance Type"])}><Trash2 className="w-4 h-4" /></button>
                   </div>
-                </li>
+
+                  {/* Note Input */}
+                  <Input
+                    type="text"
+                    placeholder="Add a note..."
+                    value={String(item.note ?? "")}
+                    onChange={e => onNoteChange(item["Instance Type"], e.target.value)}
+                    className="mt-3 text-xs bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200"
+                  />
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
-        <div className="px-6 py-6 border-t bg-gradient-to-t from-gray-100 to-white rounded-b-3xl flex flex-col gap-3 shadow-inner">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-lg font-semibold text-gray-700">Total Selected</span>
-            <span className="text-3xl font-extrabold text-black font-mono">${total.toFixed(2)}</span>
+
+        {/* Footer */}
+        {items.length > 0 && (
+          <div className="border-t border-gray-100 p-6 space-y-4">
+            {/* Total */}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-lg font-medium text-gray-900">Total</span>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-gray-900">${total.toFixed(2)}</div>
+                <div className="text-sm text-gray-500">per hour</div>
+              </div>
+            </div>
+
+            {/* Session Name Input */}
+            <Input 
+              type="text" 
+              placeholder="Session name (optional)" 
+              value={sessionName} 
+              onChange={e => setSessionName(e.target.value)} 
+              className="bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200" 
+            />
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button 
+                onClick={onSave}
+                disabled={items.length === 0}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+              >
+                Save Session
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleClearClick}
+                disabled={items.length === 0}
+                className="hover:bg-gray-50"
+              >
+                Clear
+              </Button>
+            </div>
           </div>
-          <Input 
-            type="text" 
-            placeholder="Enter a name for this session" 
-            value={sessionName} 
-            onChange={e => setSessionName(e.target.value)} 
-            className="mt-1 bg-gray-50 border-gray-200 rounded-md" 
-          />
-          <Button 
-            className="w-full mt-3 font-bold text-base py-2 rounded-xl shadow-md" 
-            onClick={onSave}
-            disabled={items.length === 0 || !sessionName.trim()}
-          >
-            Save Session
-          </Button>
-          <Button 
-            className="w-full mt-1 font-semibold text-base py-2 rounded-xl" 
-            variant="outline" 
-            onClick={handleClearClick}
-            disabled={items.length === 0}
-          >
-            Clear Cart
-          </Button>
-        </div>
-      </aside>
+        )}
+      </div>
 
       <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Clear Cart</DialogTitle>
             <DialogDescription>
-              Are you sure you want to clear all items from your cart? This action cannot be undone.
+              Are you sure you want to remove all items from your cart? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setClearDialogOpen(false)}>
               Cancel
             </Button>
