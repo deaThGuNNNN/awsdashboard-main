@@ -224,8 +224,8 @@ function SavedSessionsSidebar({
 
   return (
     <>
-      <aside className="w-full max-w-xs min-w-[260px] bg-white border-r border-gray-200 flex flex-col h-full sticky top-0 z-10">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+      <aside className="w-80 min-w-[300px] bg-white border-r border-gray-100 flex flex-col h-full sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <span className="font-semibold text-gray-800 text-base flex items-center gap-2">
             <Box className="w-5 h-5" />Saved Sessions
           </span>
@@ -233,25 +233,25 @@ function SavedSessionsSidebar({
             {sessions.length}
           </Badge>
         </div>
-        <div className="px-4 py-3">
+        <div className="px-5 py-4 flex flex-col gap-3 flex-1">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input 
               type="text" 
               placeholder="Search sessions..." 
-              className="mb-3 pl-9" 
+              className="pl-9 bg-gray-50 focus:bg-white" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <ul className="space-y-2 max-h-[500px] overflow-y-auto">
+          <ul className="space-y-2 flex-1 overflow-y-auto pr-1">
             {filteredSessions.length === 0 ? (
               <li className="text-center py-8 text-gray-400">
                 {searchTerm ? 'No sessions found' : 'No saved sessions yet'}
               </li>
             ) : (
               filteredSessions.map((session) => (
-                <li key={session.id} className="bg-gray-50 rounded-lg px-3 py-2 flex flex-col border hover:bg-gray-100 cursor-pointer group">
+                <li key={session.id} className="relative bg-gray-50 rounded-xl px-4 py-3 flex flex-col border border-gray-200 hover:border-gray-300 hover:bg-gray-100 cursor-pointer group shadow-sm transition">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm text-gray-900 truncate">{session.name}</span>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
