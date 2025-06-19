@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 
 interface EC2Instance {
   "Instance Type": string;
@@ -444,6 +445,12 @@ function ServiceCatalog({ selected, onSelect }: { selected: string; onSelect: (s
 }
 
 function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
+  const itemsPerPage = 10;
+  const [page, setPage] = useState(1);
+  const pageCount = Math.ceil(instances.length / itemsPerPage) || 1;
+  const paginated = instances.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const goPrev = () => setPage((p) => Math.max(1, p - 1));
+  const goNext = () => setPage((p) => Math.min(pageCount, p + 1));
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
@@ -462,11 +469,29 @@ function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {instances.map((instance, idx) => (
+          {paginated.map((instance, idx) => (
             <EC2TableRow key={instance["Instance Type"] + idx} instance={instance} onAdd={onAdd} />
           ))}
         </tbody>
       </table>
+      {/* Pagination Controls */}
+      {pageCount > 1 && (
+        <div className="p-3 border-t bg-gray-50/50">
+          <Pagination className="justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" onClick={(e) => {e.preventDefault(); goPrev();}} className={page===1?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="text-sm font-medium px-2">Page {page} of {pageCount}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" onClick={(e) => {e.preventDefault(); goNext();}} className={page===pageCount?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
@@ -500,6 +525,12 @@ function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any
 }
 
 function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
+  const itemsPerPage = 10;
+  const [page, setPage] = useState(1);
+  const pageCount = Math.ceil(instances.length / itemsPerPage) || 1;
+  const paginated = instances.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const goPrev = () => setPage((p) => Math.max(1, p - 1));
+  const goNext = () => setPage((p) => Math.min(pageCount, p + 1));
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
@@ -516,7 +547,7 @@ function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {instances.map((instance, idx) => (
+          {paginated.map((instance, idx) => (
             <tr key={instance["DB Instance Class"] + idx} className="group hover:bg-purple-50/50 transition-colors">
               <td className="px-4 py-3 font-medium text-purple-600">{instance["DB Instance Class"]}</td>
               <td className="px-4 py-3">{instance.Engine}</td>
@@ -540,6 +571,24 @@ function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
           ))}
         </tbody>
       </table>
+      {/* Pagination Controls */}
+      {pageCount > 1 && (
+        <div className="p-3 border-t bg-gray-50/50">
+          <Pagination className="justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" onClick={(e) => {e.preventDefault(); goPrev();}} className={page===1?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="text-sm font-medium px-2">Page {page} of {pageCount}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" onClick={(e) => {e.preventDefault(); goNext();}} className={page===pageCount?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
@@ -593,6 +642,13 @@ function EBSTable({ onAdd }: { onAdd: (storage: any) => void }) {
     }
   ];
 
+  const itemsPerPage = 10;
+  const [page, setPage] = useState(1);
+  const pageCount = Math.ceil(ebsTypes.length / itemsPerPage) || 1;
+  const paginated = ebsTypes.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const goPrev = () => setPage((p) => Math.max(1, p - 1));
+  const goNext = () => setPage((p) => Math.min(pageCount, p + 1));
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
@@ -609,7 +665,7 @@ function EBSTable({ onAdd }: { onAdd: (storage: any) => void }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {ebsTypes.map((storage, idx) => (
+          {paginated.map((storage, idx) => (
             <tr key={storage.type + idx} className="group hover:bg-amber-50/50 transition-colors">
               <td className="px-4 py-3 font-medium text-amber-600">{storage.type}</td>
               <td className="px-4 py-3 font-medium">${storage.basePrice.toFixed(3)}</td>
@@ -633,6 +689,24 @@ function EBSTable({ onAdd }: { onAdd: (storage: any) => void }) {
           ))}
         </tbody>
       </table>
+      {/* Pagination Controls */}
+      {pageCount > 1 && (
+        <div className="p-3 border-t bg-gray-50/50">
+          <Pagination className="justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" onClick={(e)=>{e.preventDefault();goPrev();}} className={page===1?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="text-sm font-medium px-2">Page {page} of {pageCount}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" onClick={(e)=>{e.preventDefault();goNext();}} className={page===pageCount?"pointer-events-none opacity-50":""} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
@@ -686,7 +760,7 @@ function BasketSidebar({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -818,7 +892,7 @@ function BasketSidebar({
             <Button 
               onClick={onSave}
               disabled={items.length === 0}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white border-0"
             >
               Save Session
             </Button>
