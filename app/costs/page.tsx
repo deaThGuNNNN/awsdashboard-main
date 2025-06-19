@@ -415,7 +415,11 @@ function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
             <th className="px-4 py-3 text-left font-semibold">vCPU</th>
             <th className="px-4 py-3 text-left font-semibold">Memory</th>
             <th className="px-4 py-3 text-left font-semibold">Storage</th>
-            <th className="px-4 py-3 text-left font-semibold">Cost/hr</th>
+            <th className="px-4 py-3 text-left font-semibold">Network</th>
+            <th className="px-4 py-3 text-left font-semibold">OS</th>
+            <th className="px-4 py-3 text-left font-semibold">Deployment</th>
+            <th className="px-4 py-3 text-left font-semibold">OnDemand/hr</th>
+            <th className="px-4 py-3 text-left font-semibold">Reserved/hr</th>
             <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
           </tr>
         </thead>
@@ -437,7 +441,11 @@ function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any
       <td className="px-4 py-2">{instance.vCPU}</td>
       <td className="px-4 py-2">{instance.Memory}</td>
       <td className="px-4 py-2">{instance["Storage Edition"]}</td>
+      <td className="px-4 py-2">{instance.Model}</td>
+      <td className="px-4 py-2">{instance["Operating System"]}</td>
+      <td className="px-4 py-2">{instance["Deployment Option"]}</td>
       <td className="px-4 py-2 font-mono">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
+      <td className="px-4 py-2 font-mono">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
       <td className="px-4 py-2 text-center">
         <Button size="icon" variant="outline" onClick={() => onAdd(instance)} title="Add to cart">
           <Plus className="w-4 h-4" />
@@ -454,23 +462,114 @@ function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-3 text-left font-semibold">DB Instance</th>
-            <th className="px-4 py-3 text-left font-semibold">vCPU</th>
-            <th className="px-4 py-3 text-left font-semibold">Memory</th>
-            <th className="px-4 py-3 text-left font-semibold">Storage</th>
-            <th className="px-4 py-3 text-left font-semibold">Cost/hr</th>
+            <th className="px-4 py-3 text-left font-semibold">Engine</th>
+            <th className="px-4 py-3 text-left font-semibold">Storage Type</th>
+            <th className="px-4 py-3 text-left font-semibold">Deployment</th>
+            <th className="px-4 py-3 text-left font-semibold">License</th>
+            <th className="px-4 py-3 text-left font-semibold">OnDemand/hr</th>
+            <th className="px-4 py-3 text-left font-semibold">Reserved/hr</th>
             <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
           </tr>
         </thead>
         <tbody>
           {instances.map((instance, idx) => (
-            <tr key={instance["Instance Type"] + idx} className="hover:bg-gray-100 transition">
-              <td className="px-4 py-2 font-mono text-black">{instance["Instance Type"]}</td>
-              <td className="px-4 py-2">{instance.vCPU}</td>
-              <td className="px-4 py-2">{instance.Memory}</td>
-              <td className="px-4 py-2">{instance["Storage Edition"] || instance["Storage"]}</td>
+            <tr key={instance["DB Instance Class"] + idx} className="hover:bg-gray-100 transition">
+              <td className="px-4 py-2 font-mono text-black">{instance["DB Instance Class"]}</td>
+              <td className="px-4 py-2">{instance.Engine}</td>
+              <td className="px-4 py-2">{instance["Storage Type"]}</td>
+              <td className="px-4 py-2">{instance["Deployment Option"]}</td>
+              <td className="px-4 py-2">{instance["License Model"]}</td>
               <td className="px-4 py-2 font-mono">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
+              <td className="px-4 py-2 font-mono">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
               <td className="px-4 py-2 text-center">
                 <Button size="icon" variant="outline" onClick={() => onAdd(instance)} title="Add to cart">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EBSTable({ onAdd }: { onAdd: (storage: any) => void }) {
+  const ebsTypes = [
+    {
+      type: "General Purpose SSD (gp3)",
+      basePrice: 0.08,
+      iopsPrice: "3,000 free, then $0.005/IOPS",
+      throughput: "125 MB/s free, then $0.04/MB/s",
+      useCase: "Boot volumes, dev/test, low-latency interactive apps",
+      maxIOPS: "16,000",
+      maxThroughput: "1,000 MB/s"
+    },
+    {
+      type: "General Purpose SSD (gp2)",
+      basePrice: 0.10,
+      iopsPrice: "Included",
+      throughput: "Up to 250 MB/s",
+      useCase: "Boot volumes, dev/test environments",
+      maxIOPS: "16,000",
+      maxThroughput: "250 MB/s"
+    },
+    {
+      type: "Provisioned IOPS SSD (io2)",
+      basePrice: 0.125,
+      iopsPrice: "$0.065/IOPS",
+      throughput: "Up to 1,000 MB/s",
+      useCase: "Critical business applications, large databases",
+      maxIOPS: "64,000",
+      maxThroughput: "1,000 MB/s"
+    },
+    {
+      type: "Throughput Optimized HDD (st1)",
+      basePrice: 0.045,
+      iopsPrice: "Included",
+      throughput: "Up to 500 MB/s",
+      useCase: "Big data, data warehouses, log processing",
+      maxIOPS: "500",
+      maxThroughput: "500 MB/s"
+    },
+    {
+      type: "Cold HDD (sc1)",
+      basePrice: 0.015,
+      iopsPrice: "Included",
+      throughput: "Up to 250 MB/s",
+      useCase: "Infrequently accessed data",
+      maxIOPS: "250",
+      maxThroughput: "250 MB/s"
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-xl shadow-md border overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold">Storage Type</th>
+            <th className="px-4 py-3 text-left font-semibold">Price/GB-month</th>
+            <th className="px-4 py-3 text-left font-semibold">IOPS Pricing</th>
+            <th className="px-4 py-3 text-left font-semibold">Throughput</th>
+            <th className="px-4 py-3 text-left font-semibold">Use Case</th>
+            <th className="px-4 py-3 text-left font-semibold">Max IOPS</th>
+            <th className="px-4 py-3 text-left font-semibold">Max Throughput</th>
+            <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ebsTypes.map((storage, idx) => (
+            <tr key={storage.type + idx} className="hover:bg-gray-100 transition">
+              <td className="px-4 py-2 font-mono text-black">{storage.type}</td>
+              <td className="px-4 py-2 font-mono">${storage.basePrice.toFixed(3)}</td>
+              <td className="px-4 py-2">{storage.iopsPrice}</td>
+              <td className="px-4 py-2">{storage.throughput}</td>
+              <td className="px-4 py-2">{storage.useCase}</td>
+              <td className="px-4 py-2">{storage.maxIOPS}</td>
+              <td className="px-4 py-2">{storage.maxThroughput}</td>
+              <td className="px-4 py-2 text-center">
+                <Button size="icon" variant="outline" onClick={() => onAdd(storage)} title="Add to cart">
                   <Plus className="w-4 h-4" />
                 </Button>
               </td>
@@ -651,7 +750,7 @@ export default function CostsPage() {
         });
         setInstances(valid);
       });
-    fetch("/data/RDS_Merged.json")
+    fetch("/data/RDS_Pricing.json")
       .then(res => res.json())
       .then((data) => {
         const valid = (data || []).filter((item: any) => {
@@ -858,6 +957,15 @@ export default function CostsPage() {
                 <Badge variant="outline">{rdsInstances.length} services available</Badge>
               </div>
               <RDSTable instances={rdsInstances} onAdd={handleAddToBasket} />
+            </div>
+          )}
+          {service === 'ebs' && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-black">EBS Storage Types</h2>
+                <Badge variant="outline">5 storage types available</Badge>
+              </div>
+              <EBSTable onAdd={handleAddToBasket} />
             </div>
           )}
         </main>
