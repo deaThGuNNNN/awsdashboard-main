@@ -746,7 +746,7 @@ function BasketSidebar({
           <ShoppingCart className="w-5 h-5" />
         </Button>
         {items.length > 0 && (
-          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+          <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-medium">
             {items.length}
           </div>
         )}
@@ -760,7 +760,7 @@ function BasketSidebar({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -813,7 +813,7 @@ function BasketSidebar({
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemove(item["Instance Type"])}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600 w-8 h-8"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200 hover:text-black w-8 h-8"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -826,7 +826,7 @@ function BasketSidebar({
                         variant="outline"
                         size="icon"
                         onClick={() => onQuantityChange(item["Instance Type"], Math.max(1, item.quantity - 1))}
-                        className="w-8 h-8 hover:bg-gray-100"
+                        className="w-8 h-8 hover:bg-gray-200 border-gray-300"
                       >
                         <Minus className="w-3 h-3" />
                       </Button>
@@ -835,7 +835,7 @@ function BasketSidebar({
                         variant="outline"
                         size="icon"
                         onClick={() => onQuantityChange(item["Instance Type"], item.quantity + 1)}
-                        className="w-8 h-8 hover:bg-gray-100"
+                        className="w-8 h-8 hover:bg-gray-200 border-gray-300"
                       >
                         <Plus className="w-3 h-3" />
                       </Button>
@@ -855,7 +855,7 @@ function BasketSidebar({
                     placeholder="Add a note..."
                     value={String(item.note ?? "")}
                     onChange={e => onNoteChange(item["Instance Type"], e.target.value)}
-                    className="mt-3 text-xs bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200"
+                    className="mt-3 text-xs bg-white/80 border-gray-200 focus:border-black focus:ring-gray-200"
                   />
                 </div>
               ))}
@@ -884,7 +884,7 @@ function BasketSidebar({
             placeholder="Session name (optional)" 
             value={sessionName} 
             onChange={e => setSessionName(e.target.value)} 
-            className="bg-white/80 border-gray-200 focus:border-blue-300 focus:ring-blue-200" 
+            className="bg-white/80 border-gray-200 focus:border-black focus:ring-gray-200" 
           />
 
           {/* Action Buttons */}
@@ -892,7 +892,7 @@ function BasketSidebar({
             <Button 
               onClick={onSave}
               disabled={items.length === 0}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white border-0"
+              className="flex-1 bg-black hover:bg-gray-900 text-white border-0"
             >
               Save Session
             </Button>
@@ -900,7 +900,7 @@ function BasketSidebar({
               variant="outline" 
               onClick={handleClearClick}
               disabled={items.length === 0}
-              className="hover:bg-gray-50"
+              className="hover:bg-gray-100 border-gray-300"
             >
               Clear
             </Button>
