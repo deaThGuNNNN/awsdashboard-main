@@ -344,9 +344,7 @@ function FilterBar({
         <SelectContent>
           <SelectItem value="all">All Services</SelectItem>
           <SelectItem value="ec2">EC2</SelectItem>
-          <SelectItem value="s3">S3</SelectItem>
           <SelectItem value="rds">RDS</SelectItem>
-          <SelectItem value="lambda">Lambda</SelectItem>
         </SelectContent>
       </Select>
       <Select value={region} onValueChange={setRegion}>
@@ -384,17 +382,20 @@ function FilterBar({
   );
 }
 
-function ServiceCatalog() {
+function ServiceCatalog({ selected, onSelect }: { selected: string; onSelect: (service: string) => void }) {
   const cards = [
-    { icon: <Server className="w-6 h-6 text-blue-600" />, label: "EC2", desc: "Compute instances" },
-    { icon: <Cloud className="w-6 h-6 text-green-600" />, label: "S3", desc: "Storage services" },
-    { icon: <Database className="w-6 h-6 text-purple-600" />, label: "RDS", desc: "Managed databases" },
-    { icon: <Box className="w-6 h-6 text-yellow-600" />, label: "Lambda", desc: "Serverless compute" },
+    { key: 'ec2', icon: <Server className="w-6 h-6 text-blue-600" />, label: "EC2", desc: "Compute instances" },
+    { key: 'rds', icon: <Database className="w-6 h-6 text-purple-600" />, label: "RDS", desc: "Managed databases" },
+    { key: 'ebs', icon: <Box className="w-6 h-6 text-yellow-600" />, label: "EBS Storage", desc: "Block storage" },
   ];
   return (
     <div className="flex gap-6 mb-6">
-      {cards.map((c, i) => (
-        <div key={i} className="flex flex-col items-center bg-white border rounded-xl shadow-sm px-8 py-6 hover:shadow-md cursor-pointer min-w-[160px]">
+      {cards.map((c) => (
+        <div
+          key={c.key}
+          className={`flex flex-col items-center bg-white border rounded-xl shadow-sm px-8 py-6 hover:shadow-md cursor-pointer min-w-[160px] transition-all ${selected === c.key ? 'ring-2 ring-blue-500 border-blue-500' : ''}`}
+          onClick={() => onSelect(c.key)}
+        >
           {c.icon}
           <span className="font-semibold text-lg mt-2 mb-1">{c.label}</span>
           <span className="text-xs text-gray-500">{c.desc}</span>
@@ -443,6 +444,41 @@ function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any
         </Button>
       </td>
     </tr>
+  );
+}
+
+function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
+  return (
+    <div className="bg-white rounded-xl shadow-md border overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold">DB Instance</th>
+            <th className="px-4 py-3 text-left font-semibold">vCPU</th>
+            <th className="px-4 py-3 text-left font-semibold">Memory</th>
+            <th className="px-4 py-3 text-left font-semibold">Storage</th>
+            <th className="px-4 py-3 text-left font-semibold">Cost/hr</th>
+            <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
+          </tr>
+        </thead>
+        <tbody>
+          {instances.map((instance, idx) => (
+            <tr key={instance["Instance Type"] + idx} className="hover:bg-gray-100 transition">
+              <td className="px-4 py-2 font-mono text-black">{instance["Instance Type"]}</td>
+              <td className="px-4 py-2">{instance.vCPU}</td>
+              <td className="px-4 py-2">{instance.Memory}</td>
+              <td className="px-4 py-2">{instance["Storage Edition"] || instance["Storage"]}</td>
+              <td className="px-4 py-2 font-mono">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
+              <td className="px-4 py-2 text-center">
+                <Button size="icon" variant="outline" onClick={() => onAdd(instance)} title="Add to cart">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -572,13 +608,14 @@ function BasketSidebar({
 
 export default function CostsPage() {
   const [instances, setInstances] = useState<any[]>([]);
+  const [rdsInstances, setRdsInstances] = useState<any[]>([]);
   const [basket, setBasket] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortBy, setSortBy] = useState<string>("OnDemand_desc");
   const [timeRange, setTimeRange] = useState("30d");
-  const [service, setService] = useState("all");
+  const [service, setService] = useState("ec2");
   const [region, setRegion] = useState("all");
   const [sessionName, setSessionName] = useState("");
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
@@ -613,6 +650,18 @@ export default function CostsPage() {
           return true;
         });
         setInstances(valid);
+      });
+    fetch("/data/RDS_Merged.json")
+      .then(res => res.json())
+      .then((data) => {
+        const valid = (data || []).filter((item: any) => {
+          if (!item || typeof item !== 'object') return false;
+          if (!item["Instance Type"] || typeof item["Instance Type"] !== 'string') return false;
+          const price = parseFloat(item.OnDemand);
+          if (isNaN(price)) return false;
+          return true;
+        });
+        setRdsInstances(valid);
       });
   }, []);
 
@@ -790,18 +839,27 @@ export default function CostsPage() {
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
-          <ServiceCatalog />
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-black">EC2 Instance Types</h2>
-              <Badge variant="outline">
-                {sortedInstances.length} services available
-              </Badge>
+          <ServiceCatalog selected={service} onSelect={setService} />
+          {service === 'ec2' && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-black">EC2 Instance Types</h2>
+                <Badge variant="outline">{sortedInstances.length} services available</Badge>
+              </div>
+              <DndContext onDragEnd={handleDragEnd}>
+                <EC2Table instances={sortedInstances} onAdd={handleAddToBasket} />
+              </DndContext>
             </div>
-            <DndContext onDragEnd={handleDragEnd}>
-              <EC2Table instances={sortedInstances} onAdd={handleAddToBasket} />
-            </DndContext>
-          </div>
+          )}
+          {service === 'rds' && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-black">RDS Instance Types</h2>
+                <Badge variant="outline">{rdsInstances.length} services available</Badge>
+              </div>
+              <RDSTable instances={rdsInstances} onAdd={handleAddToBasket} />
+            </div>
+          )}
         </main>
         <BasketSidebar
           items={basket}
