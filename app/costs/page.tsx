@@ -329,54 +329,63 @@ function FilterBar({
   sortBy, setSortBy
 }: any) {
   return (
-    <div className="flex flex-wrap gap-3 items-center mb-6 bg-white rounded-lg shadow-sm px-4 py-3 border">
-      <Select value={timeRange} onValueChange={setTimeRange}>
-        <SelectTrigger className="w-36"><SelectValue placeholder="Last 30 Days" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="30d">Last 30 Days</SelectItem>
-          <SelectItem value="7d">Last 7 Days</SelectItem>
-          <SelectItem value="90d">Last 90 Days</SelectItem>
-          <SelectItem value="custom">Custom Range</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select value={service} onValueChange={setService}>
-        <SelectTrigger className="w-36"><SelectValue placeholder="All Services" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Services</SelectItem>
-          <SelectItem value="ec2">EC2</SelectItem>
-          <SelectItem value="rds">RDS</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select value={region} onValueChange={setRegion}>
-        <SelectTrigger className="w-36"><SelectValue placeholder="All Regions" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Regions</SelectItem>
-          <SelectItem value="us-east-1">us-east-1</SelectItem>
-          <SelectItem value="us-west-2">us-west-2</SelectItem>
-          <SelectItem value="eu-west-1">eu-west-1</SelectItem>
-          <SelectItem value="ap-southeast-1">ap-southeast-1</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select value={sortBy} onValueChange={setSortBy}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Sort by Cost" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="OnDemand_desc">Cost (High to Low)</SelectItem>
-          <SelectItem value="OnDemand_asc">Cost (Low to High)</SelectItem>
-          <SelectItem value="Instance Type_asc">Instance Type (A-Z)</SelectItem>
-          <SelectItem value="vCPU_desc">vCPU (High to Low)</SelectItem>
-          <SelectItem value="Memory_desc">Memory (High to Low)</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap gap-3 items-center mb-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm px-6 py-4 border border-gray-200/80">
+      <div className="flex items-center gap-3">
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="w-36 bg-white"><SelectValue placeholder="Last 30 Days" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="30d">Last 30 Days</SelectItem>
+            <SelectItem value="7d">Last 7 Days</SelectItem>
+            <SelectItem value="90d">Last 90 Days</SelectItem>
+            <SelectItem value="custom">Custom Range</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={service} onValueChange={setService}>
+          <SelectTrigger className="w-36 bg-white"><SelectValue placeholder="All Services" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Services</SelectItem>
+            <SelectItem value="ec2">EC2</SelectItem>
+            <SelectItem value="rds">RDS</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={region} onValueChange={setRegion}>
+          <SelectTrigger className="w-36 bg-white"><SelectValue placeholder="All Regions" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Regions</SelectItem>
+            <SelectItem value="us-east-1">us-east-1</SelectItem>
+            <SelectItem value="us-west-2">us-west-2</SelectItem>
+            <SelectItem value="eu-west-1">eu-west-1</SelectItem>
+            <SelectItem value="ap-southeast-1">ap-southeast-1</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="h-6 w-px bg-gray-200 mx-2" />
+
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Sort by Cost" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="OnDemand_desc">Cost (High to Low)</SelectItem>
+            <SelectItem value="OnDemand_asc">Cost (Low to High)</SelectItem>
+            <SelectItem value="Instance Type_asc">Instance Type (A-Z)</SelectItem>
+            <SelectItem value="vCPU_desc">vCPU (High to Low)</SelectItem>
+            <SelectItem value="Memory_desc">Memory (High to Low)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex-1" />
+      
       <div className="relative">
+        <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
         <Input 
           type="text" 
           placeholder="Search services..." 
-          className="pl-9 w-64" 
+          className="pl-9 w-[300px] bg-white focus:ring-2 focus:ring-blue-500/20" 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
       </div>
     </div>
   );
@@ -384,21 +393,50 @@ function FilterBar({
 
 function ServiceCatalog({ selected, onSelect }: { selected: string; onSelect: (service: string) => void }) {
   const cards = [
-    { key: 'ec2', icon: <Server className="w-6 h-6 text-blue-600" />, label: "EC2", desc: "Compute instances" },
-    { key: 'rds', icon: <Database className="w-6 h-6 text-purple-600" />, label: "RDS", desc: "Managed databases" },
-    { key: 'ebs', icon: <Box className="w-6 h-6 text-yellow-600" />, label: "EBS Storage", desc: "Block storage" },
+    { 
+      key: 'ec2', 
+      icon: <Server className="w-7 h-7 text-blue-500 group-hover:text-blue-600 transition-colors" />, 
+      label: "EC2", 
+      desc: "Compute instances",
+      color: "from-blue-50 to-blue-100/50",
+      selectedColor: "ring-blue-500/50 bg-blue-50"
+    },
+    { 
+      key: 'rds', 
+      icon: <Database className="w-7 h-7 text-purple-500 group-hover:text-purple-600 transition-colors" />, 
+      label: "RDS", 
+      desc: "Managed databases",
+      color: "from-purple-50 to-purple-100/50",
+      selectedColor: "ring-purple-500/50 bg-purple-50"
+    },
+    { 
+      key: 'ebs', 
+      icon: <Box className="w-7 h-7 text-amber-500 group-hover:text-amber-600 transition-colors" />, 
+      label: "EBS Storage", 
+      desc: "Block storage",
+      color: "from-amber-50 to-amber-100/50",
+      selectedColor: "ring-amber-500/50 bg-amber-50"
+    },
   ];
+  
   return (
-    <div className="flex gap-6 mb-6">
+    <div className="flex gap-4 mb-8">
       {cards.map((c) => (
         <div
           key={c.key}
-          className={`flex flex-col items-center bg-white border rounded-xl shadow-sm px-8 py-6 hover:shadow-md cursor-pointer min-w-[160px] transition-all ${selected === c.key ? 'ring-2 ring-blue-500 border-blue-500' : ''}`}
+          className={`
+            group flex flex-col items-center bg-gradient-to-b ${c.color} 
+            border rounded-xl px-8 py-6 cursor-pointer min-w-[180px]
+            hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200
+            ${selected === c.key ? `ring-2 ${c.selectedColor} border-transparent shadow-md` : 'hover:border-gray-300'}
+          `}
           onClick={() => onSelect(c.key)}
         >
-          {c.icon}
-          <span className="font-semibold text-lg mt-2 mb-1">{c.label}</span>
-          <span className="text-xs text-gray-500">{c.desc}</span>
+          <div className="p-3 rounded-full bg-white/80 backdrop-blur-sm shadow-sm mb-4 group-hover:shadow group-hover:scale-110 transition-all duration-200">
+            {c.icon}
+          </div>
+          <span className="font-semibold text-lg mb-1 group-hover:scale-105 transition-transform">{c.label}</span>
+          <span className="text-sm text-gray-600">{c.desc}</span>
         </div>
       ))}
     </div>
@@ -407,23 +445,23 @@ function ServiceCatalog({ selected, onSelect }: { selected: string; onSelect: (s
 
 function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
   return (
-    <div className="bg-white rounded-xl shadow-md border overflow-x-auto">
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold">Instance Type</th>
-            <th className="px-4 py-3 text-left font-semibold">vCPU</th>
-            <th className="px-4 py-3 text-left font-semibold">Memory</th>
-            <th className="px-4 py-3 text-left font-semibold">Storage</th>
-            <th className="px-4 py-3 text-left font-semibold">Network</th>
-            <th className="px-4 py-3 text-left font-semibold">OS</th>
-            <th className="px-4 py-3 text-left font-semibold">Deployment</th>
-            <th className="px-4 py-3 text-left font-semibold">OnDemand/hr</th>
-            <th className="px-4 py-3 text-left font-semibold">Reserved/hr</th>
-            <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50/50">
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Instance Type</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">vCPU</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Memory</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Storage</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Network</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">OS</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Deployment</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">OnDemand/hr</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Reserved/hr</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-600">Add to Cart</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-100">
           {instances.map((instance, idx) => (
             <EC2TableRow key={instance["Instance Type"] + idx} instance={instance} onAdd={onAdd} />
           ))}
@@ -436,18 +474,24 @@ function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: an
 function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: instance["Instance Type"], data: instance });
   return (
-    <tr ref={setNodeRef} {...listeners} {...attributes} className={`hover:bg-gray-100 transition ${isDragging ? "opacity-50" : ""}`}> 
-      <td className="px-4 py-2 font-mono text-black">{instance["Instance Type"]}</td>
-      <td className="px-4 py-2">{instance.vCPU}</td>
-      <td className="px-4 py-2">{instance.Memory}</td>
-      <td className="px-4 py-2">{instance["Storage Edition"]}</td>
-      <td className="px-4 py-2">{instance.Model}</td>
-      <td className="px-4 py-2">{instance["Operating System"]}</td>
-      <td className="px-4 py-2">{instance["Deployment Option"]}</td>
-      <td className="px-4 py-2 font-mono">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
-      <td className="px-4 py-2 font-mono">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
-      <td className="px-4 py-2 text-center">
-        <Button size="icon" variant="outline" onClick={() => onAdd(instance)} title="Add to cart">
+    <tr ref={setNodeRef} {...listeners} {...attributes} className={`group hover:bg-blue-50/50 transition-colors ${isDragging ? "opacity-50 bg-blue-50/30" : ""}`}> 
+      <td className="px-4 py-3 font-medium text-blue-600">{instance["Instance Type"]}</td>
+      <td className="px-4 py-3">{instance.vCPU}</td>
+      <td className="px-4 py-3">{instance.Memory}</td>
+      <td className="px-4 py-3">{instance["Storage Edition"]}</td>
+      <td className="px-4 py-3">{instance.Model}</td>
+      <td className="px-4 py-3">{instance["Operating System"]}</td>
+      <td className="px-4 py-3">{instance["Deployment Option"]}</td>
+      <td className="px-4 py-3 font-medium">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
+      <td className="px-4 py-3 font-medium text-green-600">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
+      <td className="px-4 py-3 text-center">
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          onClick={() => onAdd(instance)} 
+          title="Add to cart"
+          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 hover:text-blue-600"
+        >
           <Plus className="w-4 h-4" />
         </Button>
       </td>
@@ -457,32 +501,38 @@ function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any
 
 function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
   return (
-    <div className="bg-white rounded-xl shadow-md border overflow-x-auto">
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold">DB Instance</th>
-            <th className="px-4 py-3 text-left font-semibold">Engine</th>
-            <th className="px-4 py-3 text-left font-semibold">Storage Type</th>
-            <th className="px-4 py-3 text-left font-semibold">Deployment</th>
-            <th className="px-4 py-3 text-left font-semibold">License</th>
-            <th className="px-4 py-3 text-left font-semibold">OnDemand/hr</th>
-            <th className="px-4 py-3 text-left font-semibold">Reserved/hr</th>
-            <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50/50">
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">DB Instance</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Engine</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Storage Type</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Deployment</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">License</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">OnDemand/hr</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Reserved/hr</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-600">Add to Cart</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-100">
           {instances.map((instance, idx) => (
-            <tr key={instance["DB Instance Class"] + idx} className="hover:bg-gray-100 transition">
-              <td className="px-4 py-2 font-mono text-black">{instance["DB Instance Class"]}</td>
-              <td className="px-4 py-2">{instance.Engine}</td>
-              <td className="px-4 py-2">{instance["Storage Type"]}</td>
-              <td className="px-4 py-2">{instance["Deployment Option"]}</td>
-              <td className="px-4 py-2">{instance["License Model"]}</td>
-              <td className="px-4 py-2 font-mono">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
-              <td className="px-4 py-2 font-mono">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
-              <td className="px-4 py-2 text-center">
-                <Button size="icon" variant="outline" onClick={() => onAdd(instance)} title="Add to cart">
+            <tr key={instance["DB Instance Class"] + idx} className="group hover:bg-purple-50/50 transition-colors">
+              <td className="px-4 py-3 font-medium text-purple-600">{instance["DB Instance Class"]}</td>
+              <td className="px-4 py-3">{instance.Engine}</td>
+              <td className="px-4 py-3">{instance["Storage Type"]}</td>
+              <td className="px-4 py-3">{instance["Deployment Option"]}</td>
+              <td className="px-4 py-3">{instance["License Model"]}</td>
+              <td className="px-4 py-3 font-medium">${safeParseFloat(instance.OnDemand).toFixed(3)}</td>
+              <td className="px-4 py-3 font-medium text-green-600">${safeParseFloat(instance.Reserved || 0).toFixed(3)}</td>
+              <td className="px-4 py-3 text-center">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => onAdd(instance)} 
+                  title="Add to cart"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-100 hover:text-purple-600"
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
               </td>
@@ -544,32 +594,38 @@ function EBSTable({ onAdd }: { onAdd: (storage: any) => void }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-md border overflow-x-auto">
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/80 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold">Storage Type</th>
-            <th className="px-4 py-3 text-left font-semibold">Price/GB-month</th>
-            <th className="px-4 py-3 text-left font-semibold">IOPS Pricing</th>
-            <th className="px-4 py-3 text-left font-semibold">Throughput</th>
-            <th className="px-4 py-3 text-left font-semibold">Use Case</th>
-            <th className="px-4 py-3 text-left font-semibold">Max IOPS</th>
-            <th className="px-4 py-3 text-left font-semibold">Max Throughput</th>
-            <th className="px-4 py-3 text-center font-semibold">Add to Cart</th>
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50/50">
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Storage Type</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Price/GB-month</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">IOPS Pricing</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Throughput</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Use Case</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Max IOPS</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">Max Throughput</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-600">Add to Cart</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-100">
           {ebsTypes.map((storage, idx) => (
-            <tr key={storage.type + idx} className="hover:bg-gray-100 transition">
-              <td className="px-4 py-2 font-mono text-black">{storage.type}</td>
-              <td className="px-4 py-2 font-mono">${storage.basePrice.toFixed(3)}</td>
-              <td className="px-4 py-2">{storage.iopsPrice}</td>
-              <td className="px-4 py-2">{storage.throughput}</td>
-              <td className="px-4 py-2">{storage.useCase}</td>
-              <td className="px-4 py-2">{storage.maxIOPS}</td>
-              <td className="px-4 py-2">{storage.maxThroughput}</td>
-              <td className="px-4 py-2 text-center">
-                <Button size="icon" variant="outline" onClick={() => onAdd(storage)} title="Add to cart">
+            <tr key={storage.type + idx} className="group hover:bg-amber-50/50 transition-colors">
+              <td className="px-4 py-3 font-medium text-amber-600">{storage.type}</td>
+              <td className="px-4 py-3 font-medium">${storage.basePrice.toFixed(3)}</td>
+              <td className="px-4 py-3">{storage.iopsPrice}</td>
+              <td className="px-4 py-3">{storage.throughput}</td>
+              <td className="px-4 py-3">{storage.useCase}</td>
+              <td className="px-4 py-3">{storage.maxIOPS}</td>
+              <td className="px-4 py-3">{storage.maxThroughput}</td>
+              <td className="px-4 py-3 text-center">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => onAdd(storage)} 
+                  title="Add to cart"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-amber-100 hover:text-amber-600"
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
               </td>
