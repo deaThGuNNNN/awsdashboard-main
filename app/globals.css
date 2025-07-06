@@ -196,3 +196,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Prevent double scrollbars on costs page */
+body:has([data-costs-page]) {
+  overflow: hidden !important;
+}
+
+html:has([data-costs-page]) {
+  overflow: hidden !important;
+}
