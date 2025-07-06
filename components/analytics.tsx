@@ -82,7 +82,7 @@ export default function Analytics({
   const allTypes = useMemo(() => unique(ec2Data.map(i => i["Instance Type"] || i.InstanceType || "Unknown")), [ec2Data]);
 
   if (loading) {
-    return <div className="p-8 text-center text-lg text-gray-500">Loading analytics...</div>
+    return <div className="p-8 text-center text-lg text-muted-foreground">Loading analytics...</div>
   }
 
   // --- Analytics/Chart Data ---
@@ -220,12 +220,12 @@ export default function Analytics({
   function MultiSelect({ label, options, value, onChange }: { label: string, options: string[], value: string[], onChange: (v: string[]) => void }) {
     return (
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />{label}</label>
+        <label className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />{label}</label>
         <div className="flex flex-wrap gap-1">
           {options.map(opt => (
             <button
               key={opt}
-              className={`px-2 py-1 rounded text-xs border ${value.includes(opt) ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-gray-300 text-gray-600'} hover:bg-blue-50 transition`}
+              className={`px-2 py-1 rounded text-xs border ${value.includes(opt) ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-muted-foreground'} hover:bg-primary/5 transition`}
               onClick={() => onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt])}
               type="button"
             >
@@ -241,11 +241,11 @@ export default function Analytics({
   function DateRangeFilter() {
     return (
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />Launch Date</label>
+        <label className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />Launch Date</label>
         <div className="flex gap-2">
-          <input type="date" value={dateRange.start} onChange={e => setDateRange(r => ({...r, start: e.target.value}))} className="border rounded px-2 py-1 text-xs" />
-          <span className="text-xs text-gray-400">to</span>
-          <input type="date" value={dateRange.end} onChange={e => setDateRange(r => ({...r, end: e.target.value}))} className="border rounded px-2 py-1 text-xs" />
+          <input type="date" value={dateRange.start} onChange={e => setDateRange(r => ({...r, start: e.target.value}))} className="border border-border bg-background text-foreground rounded px-2 py-1 text-xs" />
+          <span className="text-xs text-muted-foreground">to</span>
+          <input type="date" value={dateRange.end} onChange={e => setDateRange(r => ({...r, end: e.target.value}))} className="border border-border bg-background text-foreground rounded px-2 py-1 text-xs" />
         </div>
       </div>
     );
@@ -253,11 +253,11 @@ export default function Analytics({
   function DurationRangeFilter() {
     return (
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />Duration (days)</label>
+        <label className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1"><Filter className="w-3 h-3" />Duration (days)</label>
         <div className="flex gap-2">
-          <input type="number" min={0} value={durationRange.min} onChange={e => setDurationRange(r => ({...r, min: e.target.value}))} placeholder="Min" className="border rounded px-2 py-1 text-xs w-16" />
-          <span className="text-xs text-gray-400">to</span>
-          <input type="number" min={0} value={durationRange.max} onChange={e => setDurationRange(r => ({...r, max: e.target.value}))} placeholder="Max" className="border rounded px-2 py-1 text-xs w-16" />
+          <input type="number" min={0} value={durationRange.min} onChange={e => setDurationRange(r => ({...r, min: e.target.value}))} placeholder="Min" className="border border-border bg-background text-foreground rounded px-2 py-1 text-xs w-16" />
+          <span className="text-xs text-muted-foreground">to</span>
+          <input type="number" min={0} value={durationRange.max} onChange={e => setDurationRange(r => ({...r, max: e.target.value}))} placeholder="Max" className="border border-border bg-background text-foreground rounded px-2 py-1 text-xs w-16" />
         </div>
       </div>
     );
@@ -274,12 +274,12 @@ export default function Analytics({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-background pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">AWS Analytics Dashboard</h1>
-        <p className="text-gray-600 mb-8 text-lg">Visualize your AWS resources, costs, and usage trends with interactive charts and insights.</p>
+        <h1 className="text-3xl font-bold text-primary mb-2">AWS Analytics Dashboard</h1>
+        <p className="text-muted-foreground mb-8 text-lg">Visualize your AWS resources, costs, and usage trends with interactive charts and insights.</p>
         {/* Filter Bar */}
-        <div className="bg-white rounded-xl shadow p-4 mb-8 flex flex-col md:flex-row gap-4 items-center sticky top-0 z-20">
+        <div className="bg-card rounded-xl shadow border p-4 mb-8 flex flex-col md:flex-row gap-4 items-center sticky top-0 z-20">
           <MultiSelect label="Environment" options={allEnvs} value={envFilter} onChange={setEnvFilter} />
           <MultiSelect label="State" options={allStates} value={stateFilter} onChange={setStateFilter} />
           <MultiSelect label="Instance Type" options={allTypes.slice(0, 20)} value={typeFilter} onChange={setTypeFilter} />
@@ -288,7 +288,7 @@ export default function Analytics({
           <Button variant="outline" className="mt-4 md:mt-0" onClick={handleResetFilters}>Reset Filters</Button>
         </div>
         {/* Sticky Summary Cards */}
-        <div className="sticky top-20 z-10 bg-gray-50 pb-4 mb-8">
+        <div className="sticky top-20 z-10 bg-background pb-4 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="bg-gradient-to-br from-blue-100 to-blue-300 shadow-lg rounded-xl hover:scale-[1.02] transition-transform">
               <CardContent className="p-6 flex items-center gap-4">
@@ -342,11 +342,11 @@ export default function Analytics({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Instance Types Distribution */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Instance Types Distribution</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -367,7 +367,7 @@ export default function Analytics({
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend layout="vertical" align="right" verticalAlign="middle" />
                   </PieChart>
                 </ResponsiveContainer>
@@ -376,18 +376,18 @@ export default function Analytics({
           </Card>
           {/* Cost by Environment */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Cost by Environment</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={costByEnv}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="env" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="env" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend />
                     <Bar dataKey="OnDemand" stackId="a" fill="#3b82f6" name="OnDemand" />
                     <Bar dataKey="Reserved" stackId="a" fill="#10b981" name="Reserved" />
@@ -398,14 +398,14 @@ export default function Analytics({
           </Card>
           {/* Top Costliest Instances Table */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow col-span-1 lg:col-span-2">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Top 10 Costliest Instances (OnDemand)</CardTitle>
             </CardHeader>
-            <CardContent className="p-6 overflow-x-auto">
+            <CardContent className="p-6 overflow-x-auto bg-card">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-gray-500">
+                  <tr className="text-left text-xs text-muted-foreground">
                     <th className="px-2 py-1 cursor-pointer">Instance ID</th>
                     <th className="px-2 py-1 cursor-pointer">Type</th>
                     <th className="px-2 py-1 cursor-pointer">Environment</th>
@@ -415,12 +415,12 @@ export default function Analytics({
                 </thead>
                 <tbody>
                   {topCostliest.map((i, idx) => (
-                    <tr key={i["Instance ID"] || i.InstanceId || idx} className="hover:bg-blue-50">
-                      <td className="px-2 py-1 font-mono">{i["Instance ID"] || i.InstanceId}</td>
-                      <td className="px-2 py-1">{i["Instance Type"] || i.InstanceType}</td>
-                      <td className="px-2 py-1">{i.Environment}</td>
-                      <td className="px-2 py-1 text-blue-700 font-mono">{parseFloat(i.OnDemand).toFixed(3)}</td>
-                      <td className="px-2 py-1 text-green-700 font-mono">{parseFloat(i.Reserved).toFixed(3)}</td>
+                    <tr key={i["Instance ID"] || i.InstanceId || idx} className="hover:bg-muted border-b border-border">
+                      <td className="px-2 py-1 font-mono text-foreground">{i["Instance ID"] || i.InstanceId}</td>
+                      <td className="px-2 py-1 text-foreground">{i["Instance Type"] || i.InstanceType}</td>
+                      <td className="px-2 py-1 text-foreground">{i.Environment}</td>
+                      <td className="px-2 py-1 text-blue-700 dark:text-blue-400 font-mono">{parseFloat(i.OnDemand).toFixed(3)}</td>
+                      <td className="px-2 py-1 text-green-700 dark:text-green-400 font-mono">{parseFloat(i.Reserved).toFixed(3)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -429,18 +429,18 @@ export default function Analytics({
           </Card>
           {/* Resource Allocation by Environment */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Resource Allocation by Environment</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={resourceAlloc}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="env" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="env" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend />
                     <Bar dataKey="vCPU" fill="#3b82f6" name="vCPU" />
                     <Bar dataKey="Memory" fill="#f59e42" name="Memory (GiB)" />
@@ -451,18 +451,18 @@ export default function Analytics({
           </Card>
           {/* Instance Launches Over Time */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Instance Launches Over Time</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={launchesOverTime}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend />
                     <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} />
                   </LineChart>
@@ -472,11 +472,11 @@ export default function Analytics({
           </Card>
           {/* RDS Engine Distribution */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">RDS Engine Distribution</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -494,7 +494,7 @@ export default function Analytics({
                         <Cell key={`cell-rds-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend layout="vertical" align="right" verticalAlign="middle" />
                   </PieChart>
                 </ResponsiveContainer>
@@ -503,18 +503,18 @@ export default function Analytics({
           </Card>
           {/* RDS Storage Allocation */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">RDS Storage Allocation by Environment</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={rdsStorageAlloc}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="env" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="env" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend />
                     <Bar dataKey="Storage" fill="#10b981" name="Allocated Storage (GB)" />
                   </BarChart>
@@ -524,11 +524,11 @@ export default function Analytics({
           </Card>
           {/* RDS Multi-AZ vs Single-AZ */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">RDS Multi-AZ vs Single-AZ</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -546,7 +546,7 @@ export default function Analytics({
                         <Cell key={`cell-multi-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend layout="vertical" align="right" verticalAlign="middle" />
                   </PieChart>
                 </ResponsiveContainer>
@@ -555,18 +555,18 @@ export default function Analytics({
           </Card>
           {/* Resource Age Distribution */}
           <Card className="overflow-hidden shadow-md rounded-xl hover:shadow-lg transition-shadow col-span-1 lg:col-span-2">
-            <CardHeader className="border-b bg-gray-100 flex flex-row items-center gap-2">
+            <CardHeader className="border-b bg-muted flex flex-row items-center gap-2">
               <BarChartIcon className="h-5 w-5 text-blue-500 mr-2" />
               <CardTitle className="text-lg font-semibold">Resource Age Distribution (EC2)</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-card">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={resourceAges}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="name" hide />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                     <Legend />
                     <Bar dataKey="age" fill="#6366f1" name="Age (days)" />
                   </BarChart>

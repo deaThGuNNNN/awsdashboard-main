@@ -1,0 +1,29 @@
+[
+  {
+    "Instance Type": "db.t3.micro",
+    "Engine": "MySQL",
+    "vCPU": 2,
+    "Memory (GiB)": 1,
+    "Storage (GiB)": 20,
+    "PricePerHour": 0.017,
+    "Region": "us-east-1"
+  },
+  {
+    "Instance Type": "db.m5.large",
+    "Engine": "PostgreSQL",
+    "vCPU": 2,
+    "Memory (GiB)": 8,
+    "Storage (GiB)": 100,
+    "PricePerHour": 0.192,
+    "Region": "us-east-1"
+  },
+  {
+    "Instance Type": "db.r6g.xlarge",
+    "Engine": "MariaDB",
+    "vCPU": 4,
+    "Memory (GiB)": 32,
+    "Storage (GiB)": 200,
+    "PricePerHour": 0.504,
+    "Region": "us-east-1"
+  }
+] 

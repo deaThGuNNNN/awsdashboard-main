@@ -59,6 +59,8 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
   sortConfig
 }, ref) => {
   const [visibleColumns, setVisibleColumns] = useState<string[]>([])
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
 
   const router = useRouter()
 
@@ -81,7 +83,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
       const columnMap = new Map()
       
       // Define priority columns with their normalized names
-      const priorityColumnMappings = [
+      const priorityColumnMappings: [string, string[]][] = [
         ["Instance ID", ["Instance ID", "InstanceId"]],
         ["Instance Type", ["Instance Type", "InstanceType"]],
         ["Launch Time", ["Launch Time", "LaunchTime"]],
@@ -115,7 +117,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
         })
         .slice(0, 8) // Limit to 8 additional columns
 
-      setVisibleColumns([...priorityColumns, ...otherColumns])
+      setVisibleColumns([...priorityColumns, ...otherColumns] as string[])
     }
   }, [data, propVisibleColumns])
 
@@ -152,16 +154,10 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
   // Enhanced getUniqueValues to handle transformations
   const getUniqueValues = (field: string) => {
     const values = new Set<string>()
-    const fieldConfig = filterableFields.find(f => f.key === field)
-    
     data.forEach(item => {
       const value = item[field]
       if (value !== null && value !== undefined && value !== '') {
-        if (fieldConfig?.transform) {
-          values.add(fieldConfig.transform(value))
-        } else {
-          values.add(String(value))
-        }
+        values.add(String(value))
       }
     })
     return Array.from(values).sort()
@@ -216,6 +212,13 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
     return result
   }, [data, filters, searchTerm, sortConfig])
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const paginatedData = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [filteredData.length, totalPages]);
+
   // Handle filter change
   const handleFilterChange = (field: string, value: string | null) => {
     // This function is now handled by the parent component
@@ -227,15 +230,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
   }
 
   // Handle column sort
-  const requestSort = (key: string) => {
-    let direction: "ascending" | "descending" = "ascending"
-
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending"
-    }
-
-    setSortConfig({ key, direction })
-  }
+  const requestSort = (_key: string) => {}
 
   // Format cell value for display
   const formatCellValue = (value: any, key: string): React.ReactNode => {
@@ -295,7 +290,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
   const getSortDirectionIndicator = (key: string) => {
     if (!sortConfig || sortConfig.key !== key) return null
 
-    return sortConfig.direction === "ascending" ? (
+    return sortConfig.direction === "asc" ? (
       <ChevronUp className="h-4 w-4 ml-1" />
     ) : (
       <ChevronDown className="h-4 w-4 ml-1" />
@@ -443,16 +438,16 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
       <div className="table-content">
         {/* Summary stats */}
         <div className="mb-4 grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-sm text-gray-500">Total Instances</div>
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
+            <div className="text-sm text-muted-foreground">Total Instances</div>
             <div className="text-2xl font-bold">{summary.total}</div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-sm text-gray-500">Running</div>
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
+            <div className="text-sm text-muted-foreground">Running</div>
             <div className="text-2xl font-bold text-green-600">{summary.running}</div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-sm text-gray-500">Stopped</div>
+          <div className="bg-card p-4 rounded-lg shadow-sm border">
+            <div className="text-sm text-muted-foreground">Stopped</div>
             <div className="text-2xl font-bold text-red-600">{summary.stopped}</div>
           </div>
         </div>
@@ -477,19 +472,19 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
             </div>
           </div>
 
-          <div className="relative flex flex-col bg-white rounded-lg border">
+          <div className="relative flex flex-col bg-card rounded-lg border">
             <div className="overflow-x-auto">
               <div className="inline-block min-w-full align-middle">
                 {/* Fixed Header */}
                 <table className="min-w-full">
-                  <thead className="bg-gray-100 border-b">
+                  <thead className="bg-muted border-b">
                     <tr>
                       {visibleColumns.map((columnName, index) => (
                         <th
                           key={`header-${columnName}-${index}`}
                           className={cn(
-                            "px-4 py-3 text-left text-sm font-semibold text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-gray-100",
-                            sortConfig?.key === columnName ? "bg-gray-50" : ""
+                            "px-4 py-3 text-left text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted",
+                            sortConfig?.key === columnName ? "bg-muted/80" : ""
                           )}
                           onClick={() => requestSort(columnName)}
                         >
@@ -499,7 +494,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                           </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-gray-100">
+                      <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted">
                         Actions
                       </th>
                     </tr>
@@ -509,26 +504,26 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                 {/* Scrollable Body */}
                 <div className="overflow-y-auto scrollbar-thin" style={{ height: "520px" }}>
                   <table className="min-w-full">
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredData.length === 0 ? (
+                    <tbody className="bg-card divide-y divide-border">
+                      {paginatedData.length === 0 ? (
                         <tr>
                           <td
                             colSpan={visibleColumns.length + 1}
-                            className="px-4 py-8 text-center text-gray-500"
+                            className="px-4 py-8 text-center text-muted-foreground"
                           >
                             No instances match the current filters
                           </td>
                         </tr>
                       ) : (
-                        filteredData.map((instance, rowIndex) => (
+                        paginatedData.map((instance, rowIndex) => (
                           <tr
                             key={`row-${instance[keyField] || rowIndex}`}
-                            className="hover:bg-gray-50"
+                            className="hover:bg-muted/50"
                           >
                             {visibleColumns.map((columnName, colIndex) => (
                               <td
                                 key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`}
-                                className="px-4 py-3 text-sm text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap"
+                                className="px-4 py-3 text-sm text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap"
                               >
                                 {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
                                   ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
@@ -562,9 +557,25 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                   </table>
                 </div>
 
+                {/* Pagination Controls */}
+                <div className="flex justify-center items-center gap-2 py-3">
+                  <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant={page === i + 1 ? "default" : "outline"}
+                      onClick={() => setPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                  <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+                </div>
+
                 {/* Fixed Footer */}
                 <table className="min-w-full">
-                  <tfoot className="bg-gray-100 border-t">
+                  <tfoot className="bg-muted border-t">
                     <tr>
                       {visibleColumns.map((columnName, index) => {
                         const sum = filteredData.reduce((acc, item) => {
@@ -589,7 +600,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                         return (
                           <td
                             key={`footer-${columnName}-${index}`}
-                            className="px-4 py-3 text-sm font-semibold text-gray-900 min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-gray-100"
+                            className="px-4 py-3 text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted"
                           >
                             {shouldShowSum ? (
                               <span className="font-semibold">
@@ -603,7 +614,7 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                           </td>
                         );
                       })}
-                      <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-gray-100"></td>
+                      <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted"></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -626,10 +637,10 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
                 .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
                 .map(([key, value]) => (
                   <div key={key} className="border-b pb-2">
-                    <div className="text-sm font-medium text-gray-500">{key}</div>
+                    <div className="text-sm font-medium text-muted-foreground">{key}</div>
                     <div className="mt-1 break-words">
                       {typeof value === 'object' ? (
-                        <pre className="text-sm bg-gray-50 p-2 rounded overflow-x-auto">
+                        <pre className="text-sm bg-muted p-2 rounded overflow-x-auto">
                           {JSON.stringify(value, null, 2)}
                         </pre>
                       ) : (

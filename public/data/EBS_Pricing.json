@@ -1,0 +1,29 @@
+[
+  {
+    "Volume Type": "gp3",
+    "Description": "General Purpose SSD (gp3)",
+    "Size (GiB)": 100,
+    "IOPS": 3000,
+    "Throughput (MB/s)": 125,
+    "PricePerGBMonth": 0.08,
+    "Region": "us-east-1"
+  },
+  {
+    "Volume Type": "io2",
+    "Description": "Provisioned IOPS SSD (io2)",
+    "Size (GiB)": 100,
+    "IOPS": 5000,
+    "Throughput (MB/s)": 256,
+    "PricePerGBMonth": 0.125,
+    "Region": "us-east-1"
+  },
+  {
+    "Volume Type": "st1",
+    "Description": "Throughput Optimized HDD (st1)",
+    "Size (GiB)": 500,
+    "IOPS": 500,
+    "Throughput (MB/s)": 500,
+    "PricePerGBMonth": 0.045,
+    "Region": "us-east-1"
+  }
+] 
