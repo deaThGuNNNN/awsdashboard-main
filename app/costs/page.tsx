@@ -464,7 +464,7 @@ function SavedSessionsSidebar({
 
   return (
     <>
-      <aside className="w-[300px] bg-card border-r border-border flex flex-col h-screen shadow-sm flex-shrink-0">
+      <aside className="w-[300px] bg-card border-r border-border flex flex-col h-full shadow-sm flex-shrink-0">
         <div className="px-5 py-5 border-b bg-gradient-to-br from-muted to-card">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg shadow-sm">
@@ -487,7 +487,7 @@ function SavedSessionsSidebar({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-full">
             {filteredSessions.length === 0 ? (
               <div className="text-center py-8">
                 <div className="p-3 bg-muted rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
@@ -1369,7 +1369,7 @@ function BasketSidebar({
     <>
       <aside 
         ref={setNodeRef}
-        className={`w-[380px] bg-card border-l border-border flex flex-col h-screen shadow-xl flex-shrink-0 transition-all duration-200 ${isOver ? "ring-4 ring-blue-500 ring-opacity-50 bg-blue-50 dark:bg-blue-950" : ""}`}
+        className={`w-[380px] bg-card border-l border-border flex flex-col h-full shadow-xl flex-shrink-0 transition-all duration-200 ${isOver ? "ring-4 ring-blue-500 ring-opacity-50 bg-blue-50 dark:bg-blue-950" : ""}`}
       >
         <div className="px-5 py-5 bg-gradient-to-r from-card to-muted text-foreground">
           <div className="flex items-center gap-3">
@@ -1386,7 +1386,7 @@ function BasketSidebar({
             <span className="text-xl font-bold">{items.length}</span>
           </div>
         </div>
-        <div className="flex-1 px-5 py-5 overflow-y-auto bg-gradient-to-b from-card to-muted min-h-0">
+        <div className="flex-1 px-5 py-5 overflow-y-auto bg-gradient-to-b from-card to-muted min-h-0 max-h-full">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-muted-foreground px-4">
               <div className="relative mb-6">
@@ -2170,7 +2170,7 @@ export default function CostsPage() {
   const serviceInfo = getServiceInfo();
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden" data-costs-page>
+    <div className="flex h-[calc(100vh-5rem)] min-h-[600px] bg-background" data-costs-page>
       <SavedSessionsSidebar 
         sessions={savedSessions}
         onLoadSession={handleLoadSession}
