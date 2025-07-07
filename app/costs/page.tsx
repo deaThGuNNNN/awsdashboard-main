@@ -598,7 +598,6 @@ function SavedSessionsSidebar({
 }
 
 function FilterBar({ 
-  timeRange, setTimeRange, 
   service, setService, 
   region, setRegion,
   searchTerm, setSearchTerm,
@@ -615,7 +614,6 @@ function FilterBar({
           variant="ghost" 
           size="sm"
           onClick={() => {
-            setTimeRange("30d");
             setService("all");
             setRegion("all");
             setSortBy("OnDemand_desc");
@@ -627,22 +625,7 @@ function FilterBar({
         </Button>
       </div>
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Time Range</label>
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-full h-10 rounded-xl">
-                <SelectValue placeholder="Last 30 Days" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="30d">Last 30 Days</SelectItem>
-                <SelectItem value="7d">Last 7 Days</SelectItem>
-                <SelectItem value="90d">Last 90 Days</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Service Type</label>
             <Select value={service} onValueChange={setService}>
@@ -1744,7 +1727,6 @@ export default function CostsPage() {
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortBy, setSortBy] = useState<string>("OnDemand_desc");
-  const [timeRange, setTimeRange] = useState("30d");
   const [service, setService] = useState<"ec2" | "ebs" | "rds">("ec2");
   const [region, setRegion] = useState("all");
   const [sessionName, setSessionName] = useState("");
@@ -2244,8 +2226,6 @@ export default function CostsPage() {
           </div>
         </div>
         <FilterBar 
-          timeRange={timeRange} 
-          setTimeRange={setTimeRange} 
           service={service} 
           setService={setService} 
           region={region} 
