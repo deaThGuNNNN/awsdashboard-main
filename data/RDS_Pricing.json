@@ -25,5 +25,68 @@
     "Storage (GiB)": 200,
     "PricePerHour": 0.504,
     "Region": "us-east-1"
+  },
+  {
+    "Instance Type": "db.t4g.small",
+    "Engine": "MySQL",
+    "vCPU": 2,
+    "Memory (GiB)": 2,
+    "Storage (GiB)": 50,
+    "PricePerHour": 0.034,
+    "Region": "us-west-2"
+  },
+  {
+    "Instance Type": "db.m6i.xlarge",
+    "Engine": "PostgreSQL",
+    "vCPU": 4,
+    "Memory (GiB)": 16,
+    "Storage (GiB)": 150,
+    "PricePerHour": 0.384,
+    "Region": "us-west-2"
+  },
+  {
+    "Instance Type": "db.r5.2xlarge",
+    "Engine": "Oracle",
+    "vCPU": 8,
+    "Memory (GiB)": 64,
+    "Storage (GiB)": 500,
+    "PricePerHour": 1.008,
+    "Region": "eu-west-1"
+  },
+  {
+    "Instance Type": "db.t3.medium",
+    "Engine": "SQL Server",
+    "vCPU": 2,
+    "Memory (GiB)": 4,
+    "Storage (GiB)": 80,
+    "PricePerHour": 0.068,
+    "Region": "eu-central-1"
+  },
+  {
+    "Instance Type": "db.m5.2xlarge",
+    "Engine": "Aurora MySQL",
+    "vCPU": 8,
+    "Memory (GiB)": 32,
+    "Storage (GiB)": 300,
+    "PricePerHour": 0.768,
+    "Region": "ap-southeast-1"
+  },
+  {
+    "Instance Type": "db.r6i.large",
+    "Engine": "PostgreSQL",
+    "vCPU": 2,
+    "Memory (GiB)": 16,
+    "Storage (GiB)": 120,
+    "PricePerHour": 0.258,
+    "Region": "ap-northeast-1"
+  },
+  {
+    "Instance Type": "db.m6g.2xlarge",
+    "Engine": "MariaDB",
+    "vCPU": 8,
+    "Memory (GiB)": 32,
+    "Storage (GiB)": 250,
+    "PricePerHour": 0.672,
+    "Region": "ca-central-1"
   }
 ] 
