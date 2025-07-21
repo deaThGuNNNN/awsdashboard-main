@@ -1,6 +1,7 @@
 "use client";
 
-import Navbar from '@/components/navbar';
+import NavbarWithAuth from '@/components/navbar-with-auth';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function LayoutContent({
   children,
@@ -8,9 +9,9 @@ export default function LayoutContent({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <Navbar />
+    <ProtectedRoute>
+      <NavbarWithAuth />
       <main>{children}</main>
-    </>
+    </ProtectedRoute>
   );
 } 

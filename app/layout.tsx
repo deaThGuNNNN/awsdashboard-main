@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import LayoutContent from '@/components/layout-content'
 import { ThemeProvider } from '@/components/theme-provider'
+import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
   title: 'Dashboard App',
@@ -21,7 +22,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LayoutContent>{children}</LayoutContent>
+          <AuthProvider>
+            <LayoutContent>{children}</LayoutContent>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

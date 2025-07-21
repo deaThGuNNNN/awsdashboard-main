@@ -1,14 +1,85 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Building, MapPin, Phone, Calendar } from "lucide-react";
+import { User, Mail, Building, MapPin, Phone, Calendar, Save, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    location: "",
+    timezone: "America/New_York"
+  });
+
+  // Initialize form data when user loads
+  useEffect(() => {
+    if (user) {
+      const displayName = user.displayName || "";
+      const nameParts = displayName.split(" ");
+      setFormData({
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: user.email || "",
+        phone: "",
+        company: "",
+        location: "",
+        timezone: "America/New_York"
+      });
+    }
+  }, [user]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    setLoading(true);
+    try {
+      // Simulate saving to database/profile service
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save profile changes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -29,8 +100,10 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <Avatar className="h-32 w-32">
-              <AvatarImage src="/placeholder-user.jpg" alt="Profile" />
-              <AvatarFallback className="text-2xl">JD</AvatarFallback>
+              <AvatarImage src={user?.photoURL || "/placeholder-user.jpg"} alt="Profile" />
+              <AvatarFallback className="text-2xl">
+                {user?.displayName ? getInitials(user.displayName) : user?.email?.[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
             </Avatar>
             <Button variant="outline" size="sm">
               Change Photo
@@ -58,14 +131,18 @@ export default function ProfilePage() {
                 <Label htmlFor="first-name">First Name</Label>
                 <Input
                   id="first-name"
-                  defaultValue="John"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  placeholder="Enter your first name"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last-name">Last Name</Label>
                 <Input
                   id="last-name"
-                  defaultValue="Doe"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  placeholder="Enter your last name"
                 />
               </div>
             </div>
@@ -78,8 +155,13 @@ export default function ProfilePage() {
               <Input
                 id="email"
                 type="email"
-                defaultValue="john.doe@company.com"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="Enter your email"
+                disabled
+                className="bg-muted"
               />
+              <p className="text-xs text-muted-foreground">Email cannot be changed from this form</p>
             </div>
 
             <div className="space-y-2">
@@ -90,7 +172,9 @@ export default function ProfilePage() {
               <Input
                 id="phone"
                 type="tel"
-                defaultValue="+1 (555) 123-4567"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Enter your phone number"
               />
             </div>
 
@@ -103,7 +187,9 @@ export default function ProfilePage() {
               </Label>
               <Input
                 id="company"
-                defaultValue="Acme Corporation"
+                value={formData.company}
+                onChange={(e) => handleInputChange('company', e.target.value)}
+                placeholder="Enter your company"
               />
             </div>
 
@@ -114,7 +200,9 @@ export default function ProfilePage() {
               </Label>
               <Input
                 id="location"
-                defaultValue="New York, NY"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Enter your location"
               />
             </div>
 
@@ -122,7 +210,9 @@ export default function ProfilePage() {
               <Label htmlFor="timezone">Timezone</Label>
               <Input
                 id="timezone"
-                defaultValue="America/New_York"
+                value={formData.timezone}
+                onChange={(e) => handleInputChange('timezone', e.target.value)}
+                placeholder="Enter your timezone"
               />
             </div>
           </CardContent>
@@ -143,15 +233,25 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <Label className="text-sm font-medium text-gray-500">Account Type</Label>
-                <p className="text-lg font-semibold">Premium</p>
+                <p className="text-lg font-semibold">Free</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-500">Member Since</Label>
-                <p className="text-lg">January 15, 2023</p>
+                <p className="text-lg">
+                  {user?.metadata?.creationTime ? 
+                    new Date(user.metadata.creationTime).toLocaleDateString() : 
+                    'Recently'
+                  }
+                </p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-500">Last Login</Label>
-                <p className="text-lg">Today, 2:30 PM</p>
+                <p className="text-lg">
+                  {user?.metadata?.lastSignInTime ? 
+                    new Date(user.metadata.lastSignInTime).toLocaleDateString() : 
+                    'Today'
+                  }
+                </p>
               </div>
             </div>
 
@@ -168,8 +268,27 @@ export default function ProfilePage() {
             <Separator />
 
             <div className="flex justify-between items-center">
-              <Button size="lg">Save Changes</Button>
-              <Button variant="destructive" size="lg">Delete Account</Button>
+              <Button 
+                size="lg" 
+                onClick={handleSaveChanges}
+                disabled={loading}
+                className="min-w-[120px]"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+              <Button variant="destructive" size="lg" disabled={loading}>
+                Delete Account
+              </Button>
             </div>
           </CardContent>
         </Card>

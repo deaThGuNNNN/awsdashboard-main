@@ -1,17 +1,21 @@
 "use client"
 
-import { RefreshCw, Settings, Database, Server, BarChart, Table2, DollarSign, Moon, Sun } from "lucide-react"
+import { RefreshCw, Settings, Database, Server, BarChart, Table2, DollarSign, Moon, Sun, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/hooks/use-theme"
+import { useAuth } from "@/lib/auth-context"
+import { UserAvatar } from "@/components/auth/user-avatar"
+import { LoginDialog } from "@/components/auth/login-dialog"
+import { useState } from "react"
 
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { isDark, toggleTheme, mounted } = useTheme()
+  const { user, loading } = useAuth()
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
 
   const handleRefresh = () => {
     window.location.reload()
