@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
-import { Cpu, HardDrive, Database, Server, Monitor, ShoppingCart, Trash2, Plus, Minus, Box, User, Layers, Cloud, AlertTriangle, BarChart2, Settings, ChevronDown, Search as SearchIcon, Download, Upload, X, Check, Activity, Clock, RotateCcw } from "lucide-react";
+import { Cpu, HardDrive, Database, Server, Monitor, ShoppingCart, Trash2, Plus, Minus, Box, User, Layers, Cloud, AlertTriangle, BarChart2, Settings, ChevronDown, Search as SearchIcon, Download, Upload, X, Check, Activity, Clock } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 interface EC2Instance {
   "Instance Type": string;
@@ -163,9 +161,9 @@ function InstanceListItem({ instance, id }: { instance: EC2Instance; id: string 
 
 function Basket({ items, onRemove, onQuantityChange, onNoteChange }: {
   items: BasketItem[];
-  onRemove: (item: BasketItem) => void;
-  onQuantityChange: (item: BasketItem, qty: number) => void;
-  onNoteChange: (item: BasketItem, note: string) => void;
+  onRemove: (type: string) => void;
+  onQuantityChange: (type: string, qty: number) => void;
+  onNoteChange: (type: string, note: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: "basket" });
   const total = items.reduce((sum, item) => {
@@ -239,8 +237,8 @@ function Basket({ items, onRemove, onQuantityChange, onNoteChange }: {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[280px] flex flex-col rounded-3xl transition-all sticky top-8 shadow-2xl bg-gradient-to-b from-card to-muted ${isOver ? "ring-4 ring-primary ring-opacity-50 scale-[1.02]" : "ring-1 ring-border"}`}
-      style={{ maxHeight: 400 }}
+      className={`min-h-[320px] flex flex-col rounded-3xl transition-all sticky top-8 shadow-2xl bg-gradient-to-b from-card to-muted ${isOver ? "ring-4 ring-primary ring-opacity-50 scale-[1.02]" : "ring-1 ring-border"}`}
+      style={{ maxHeight: 600 }}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 rounded-t-3xl bg-black text-white shadow-lg">
@@ -256,23 +254,8 @@ function Basket({ items, onRemove, onQuantityChange, onNoteChange }: {
         </Badge>
       </div>
       
-      {/* Cost Summary - Always visible at top */}
-      {items.length > 0 && (
-        <div className="px-5 py-3 border-b border-border bg-card/50">
-          <div className="bg-gradient-to-br from-muted to-muted/80 rounded-xl p-3 border border-border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full"></div>
-                Hourly Total
-              </span>
-              <span className="text-lg font-bold text-foreground font-mono">${total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Items */}
-      <div className="flex-1 px-5 py-4 overflow-y-auto" style={{ maxHeight: '150px' }}>
+      <div className="flex-1 px-5 py-4 overflow-y-auto">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-muted-foreground px-4">
             <div className="relative mb-6">
@@ -303,9 +286,8 @@ function Basket({ items, onRemove, onQuantityChange, onNoteChange }: {
             </div>
           </div>
         ) : (
-          <>
-            <ul className="space-y-3">
-              {items.map(item => {
+          <ul className="space-y-3">
+            {items.map(item => {
               const itemPrice = getItemPrice(item);
               const itemDetails = getItemDetails(item);
               const itemKey = item["Instance Type"] || item["Volume Type"] || "Unknown";
@@ -380,11 +362,8 @@ function Basket({ items, onRemove, onQuantityChange, onNoteChange }: {
               );
             })}
           </ul>
-          
-
-            </>
-          )}
-        </div>
+        )}
+      </div>
       
       {/* Footer */}
       <div className="px-6 py-4 border-t border-border bg-card rounded-b-3xl">
@@ -425,7 +404,7 @@ function SavedSessionsSidebar({
     setDeleteDialogOpen(true);
   };
 
-  const handleExportSession = (session: SavedSession, format: 'json' | 'csv' = 'json') => {
+  const handleExportSession = (session: SavedSession) => {
     // Recalculate totalCost to ensure it's accurate
     const recalculatedTotal = session.items.reduce((sum, item) => {
       if (item.OnDemand) {
@@ -442,115 +421,32 @@ function SavedSessionsSidebar({
       return sum;
     }, 0);
 
-    if (format === 'json') {
-      const exportData = {
-        name: session.name,
-        items: session.items,
-        totalCost: recalculatedTotal,
-        totalCostPerMonth: recalculatedTotal * 24 * 30.44,
-        totalCostPerYear: recalculatedTotal * 24 * 365,
-        dateCreated: session.dateCreated,
-        dateModified: session.dateModified,
-        exportedAt: new Date().toISOString()
-      };
-      
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `aws-config-${session.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } else if (format === 'csv') {
-      // Prepare CSV data
-      const csvData = session.items.map(item => {
-        const itemType = item["Instance Type"] || item["Volume Type"] || 'Unknown';
-        const hourlyPrice = item.OnDemand || 
-          (item.PricePerHour) || 
-          (item.PricePerGBMonth ? (parseFloat(String(item["Size (GiB)"] || 0)) * parseFloat(String(item.PricePerGBMonth || 0))) / (24 * 30.44) : 0);
-        
-        return {
-          'ENV': '',
-          'QUOI': '',
-          'Configuration Name': session.name,
-          'Item Type': itemType,
-          'Service Type': item["Instance Type"] ? 'EC2' : item["Volume Type"] ? 'EBS' : item.Engine ? 'RDS' : 'Unknown',
-          'Quantity': item.quantity,
-          'vCPU': item.vCPU || '',
-          'Memory': item.Memory || item["Memory (GiB)"] || '',
-          'Storage': item["Storage Edition"] || item["Size (GiB)"] || item["Storage (GiB)"] || '',
-          'Operating System': item["Operating System"] || '',
-          'Engine': item.Engine || '',
-          'Region': item.Region || '',
-          'Hourly Price': parseFloat(String(hourlyPrice)).toFixed(4),
-          'Monthly Price': (parseFloat(String(hourlyPrice)) * 24 * 30.44).toFixed(2),
-          'Total Hourly (Qty)': (parseFloat(String(hourlyPrice)) * item.quantity).toFixed(4),
-          'Total Monthly (Qty)': (parseFloat(String(hourlyPrice)) * item.quantity * 24 * 30.44).toFixed(2),
-          'Note': item.note || '',
-          'Attached To': item.attachedTo || '',
-          'Date Created': new Date(session.dateCreated).toLocaleDateString(),
-          'Date Modified': new Date(session.dateModified).toLocaleDateString()
-        };
-      });
-
-      // Add summary row
-      csvData.push({
-        'ENV': '',
-        'QUOI': '',
-        'Configuration Name': `TOTAL - ${session.name}`,
-        'Item Type': 'SUMMARY',
-        'Service Type': '',
-                  'Quantity': session.items.reduce((sum, item) => sum + item.quantity, 0),
-        'vCPU': '',
-        'Memory': '',
-        'Storage': '',
-        'Operating System': '',
-        'Engine': '',
-        'Region': '',
-        'Hourly Price': '',
-        'Monthly Price': '',
-        'Total Hourly (Qty)': recalculatedTotal.toFixed(4),
-        'Total Monthly (Qty)': (recalculatedTotal * 24 * 30.44).toFixed(2),
-        'Note': 'Configuration Total',
-        'Attached To': '',
-        'Date Created': new Date(session.dateCreated).toLocaleDateString(),
-        'Date Modified': new Date(session.dateModified).toLocaleDateString()
-      });
-
-      // Convert to CSV
-      const headers = Object.keys(csvData[0]);
-      const csvContent = [
-        headers.join(','),
-        ...csvData.map(row => 
-          headers.map(header => {
-            const value = row[header as keyof typeof row];
-            // Escape commas and quotes in CSV
-            return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-              ? `"${value.replace(/"/g, '""')}"` 
-              : value;
-          }).join(',')
-        )
-      ].join('\n');
-
-      const dataBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `aws-config-${session.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
+    const exportData = {
+      name: session.name,
+      items: session.items,
+      totalCost: recalculatedTotal,
+      totalCostPerMonth: recalculatedTotal * 24 * 30.44,
+      totalCostPerYear: recalculatedTotal * 24 * 365,
+      dateCreated: session.dateCreated,
+      dateModified: session.dateModified,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `aws-config-${session.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     toast({
       title: "Configuration exported",
-      description: `${session.name} has been exported as ${format.toUpperCase()} successfully.`,
+      description: `${session.name} has been exported successfully.`,
     });
   };
 
@@ -568,7 +464,7 @@ function SavedSessionsSidebar({
 
   return (
     <>
-      <aside className="w-[300px] bg-card border-r border-border flex flex-col h-screen shadow-sm flex-shrink-0">
+      <aside className="w-[300px] bg-card border-r border-border flex flex-col h-full shadow-sm flex-shrink-0">
         <div className="px-5 py-5 border-b bg-gradient-to-br from-muted to-card">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg shadow-sm">
@@ -591,7 +487,7 @@ function SavedSessionsSidebar({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-full">
             {filteredSessions.length === 0 ? (
               <div className="text-center py-8">
                 <div className="p-3 bg-muted rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
@@ -640,47 +536,19 @@ function SavedSessionsSidebar({
                       </div>
                     </div>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity relative z-10">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0 hover:bg-muted"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            title="Export session"
-                          >
-                            <Download className="w-3 h-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Export Format</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExportSession(session, 'json');
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">JSON</span>
-                            <span>Configuration file</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExportSession(session, 'csv');
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-mono">CSV</span>
-                            <span>Spreadsheet data</span>
-                          </DropdownMenuItem>
-
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 hover:bg-muted"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleExportSession(session);
+                        }}
+                        title="Export session"
+                      >
+                        <Download className="w-3 h-3" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -730,93 +598,99 @@ function SavedSessionsSidebar({
 }
 
 function FilterBar({ 
+  service, setService, 
+  region, setRegion,
   searchTerm, setSearchTerm,
-  searchCriteria, setSearchCriteria,
-  sortBy, setSortBy,
-  service
+  sortBy, setSortBy
 }: any) {
-  const hasActiveFilters = searchCriteria.length > 0 || searchTerm.trim() !== "";
-  
   return (
     <div className="mb-8">
-      <div className="bg-gradient-to-r from-card to-muted/30 rounded-2xl shadow-lg border border-border/50 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/50 to-muted/30 border-b border-border/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Filter className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground text-sm">Search & Filter</h3>
-              <p className="text-xs text-muted-foreground">Find and sort your AWS services</p>
-            </div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Filter className="w-5 h-5" />
+          Filters & Search
+        </h2>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => {
+            setService("all");
+            setRegion("all");
+            setSortBy("OnDemand_desc");
+            setSearchTerm("");
+          }}
+          className="text-xs"
+        >
+          Reset Filters
+        </Button>
+      </div>
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Service Type</label>
+            <Select value={service} onValueChange={setService}>
+              <SelectTrigger className="w-full h-10 rounded-xl">
+                <SelectValue placeholder="All Services" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="ec2">EC2</SelectItem>
+                <SelectItem value="ebs">EBS</SelectItem>
+                <SelectItem value="rds">RDS</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="text-xs">
-                {(searchCriteria.length + (searchTerm ? 1 : 0))} active
-              </Badge>
-            )}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                setSortBy("OnDemand_desc");
-                setSearchTerm("");
-                setSearchCriteria([]);
-              }}
-              className="h-7 px-3 text-xs hover:bg-muted"
-              disabled={!hasActiveFilters}
-            >
-              <RotateCcw className="w-3 h-3 mr-1" />
-              Reset
-            </Button>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Region</label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger className="w-full h-10 rounded-xl">
+                <SelectValue placeholder="All Regions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Regions</SelectItem>
+                <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
+                <SelectItem value="us-west-2">US West (Oregon)</SelectItem>
+                <SelectItem value="eu-west-1">EU (Ireland)</SelectItem>
+                <SelectItem value="ap-southeast-1">Asia Pacific (Singapore)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-        
-        {/* Content */}
-        <div className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Sort Section */}
-            <div className="lg:w-64 flex-shrink-0">
-              <div className="flex items-center gap-2 mb-2">
-                <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
-                <label className="text-xs font-medium text-muted-foreground">Sort Results</label>
-              </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full h-9 rounded-lg bg-background border-border/60 hover:border-border transition-colors">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="OnDemand_desc">💰 Cost (High to Low)</SelectItem>
-                  <SelectItem value="OnDemand_asc">💰 Cost (Low to High)</SelectItem>
-                  <SelectItem value="PricePerGBMonth_desc">📊 Price/GB (High to Low)</SelectItem>
-                  <SelectItem value="PricePerGBMonth_asc">📊 Price/GB (Low to High)</SelectItem>
-                  <SelectItem value="PricePerHour_desc">⏱️ Price/Hour (High to Low)</SelectItem>
-                  <SelectItem value="PricePerHour_asc">⏱️ Price/Hour (Low to High)</SelectItem>
-                  <SelectItem value="Instance Type_asc">🔤 Instance Type (A-Z)</SelectItem>
-                  <SelectItem value="Volume Type_asc">🔤 Volume Type (A-Z)</SelectItem>
-                  <SelectItem value="vCPU_desc">⚡ vCPU (High to Low)</SelectItem>
-                  <SelectItem value="Memory_desc">🧠 Memory (High to Low)</SelectItem>
-                  <SelectItem value="Size (GiB)_desc">💾 Size (High to Low)</SelectItem>
-                  <SelectItem value="IOPS_desc">🚀 IOPS (High to Low)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Search Section */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <SearchIcon className="w-3 h-3 text-muted-foreground" />
-                <label className="text-xs font-medium text-muted-foreground">Search & Filter</label>
-              </div>
-              <AdvancedSearch
-                searchCriteria={searchCriteria}
-                setSearchCriteria={setSearchCriteria}
-                quickSearch={searchTerm}
-                setQuickSearch={setSearchTerm}
-                service={service}
+          
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sort By</label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full h-10 rounded-xl">
+                <SelectValue placeholder="Sort by Cost" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="OnDemand_desc">Cost (High to Low)</SelectItem>
+                <SelectItem value="OnDemand_asc">Cost (Low to High)</SelectItem>
+                <SelectItem value="PricePerGBMonth_desc">Price/GB (High to Low)</SelectItem>
+                <SelectItem value="PricePerGBMonth_asc">Price/GB (Low to High)</SelectItem>
+                <SelectItem value="PricePerHour_desc">Price/Hour (High to Low)</SelectItem>
+                <SelectItem value="PricePerHour_asc">Price/Hour (Low to High)</SelectItem>
+                <SelectItem value="Instance Type_asc">Instance Type (A-Z)</SelectItem>
+                <SelectItem value="Volume Type_asc">Volume Type (A-Z)</SelectItem>
+                <SelectItem value="vCPU_desc">vCPU (High to Low)</SelectItem>
+                <SelectItem value="Memory_desc">Memory (High to Low)</SelectItem>
+                <SelectItem value="Size (GiB)_desc">Size (High to Low)</SelectItem>
+                <SelectItem value="IOPS_desc">IOPS (High to Low)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Search</label>
+            <div className="relative">
+              <Input 
+                type="text" 
+                placeholder="Search services..." 
+                className="pl-10 h-10 rounded-xl" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -864,38 +738,35 @@ function ServiceCatalog({ selectedService, onServiceSelect }: {
         <Layers className="w-5 h-5 text-muted-foreground" />
         Service Categories
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {cards.map((c, i) => (
           <div 
             key={i} 
-            className={`group relative bg-card rounded-xl transition-all duration-200 cursor-pointer border ${
+            className={`group relative bg-card rounded-2xl shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden border ${
               selectedService === c.id 
-                ? "border-primary bg-primary/5 shadow-md" 
-                : "border-border hover:border-muted-foreground hover:shadow-sm"
+                ? "border-foreground ring-2 ring-foreground ring-opacity-20" 
+                : "border-border hover:border-muted-foreground"
             }`}
             onClick={() => onServiceSelect(c.id)}
           >
-            <div className="relative px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className={`flex-shrink-0 p-2 rounded-lg bg-gradient-to-br ${c.color} text-white transition-transform group-hover:scale-105 ${
-                  selectedService === c.id ? "scale-105" : ""
-                }`}>
-                  {c.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-base text-foreground">{c.label}</h3>
-                    {selectedService === c.id ? (
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground truncate">{c.desc}</p>
-                    <span className="text-xs font-medium text-muted-foreground ml-2 flex-shrink-0">{c.count}</span>
-                  </div>
-                </div>
+            <div className={`absolute inset-0 bg-gradient-to-br from-muted to-muted/50 opacity-0 group-hover:opacity-100 transition-opacity ${
+              selectedService === c.id ? "opacity-100" : ""
+            }`} />
+            <div className="relative p-6">
+              <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${c.color} text-white mb-4 group-hover:scale-110 transition-transform ${
+                selectedService === c.id ? "scale-110" : ""
+              }`}>
+                {c.icon}
+              </div>
+              <h3 className="font-bold text-xl text-foreground mb-1">{c.label}</h3>
+              <p className="text-sm text-muted-foreground mb-2">{c.desc}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">{c.count}</span>
+                {selectedService === c.id ? (
+                  <Check className="w-4 h-4 text-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:translate-y-1 transition-transform" />
+                )}
               </div>
             </div>
           </div>
@@ -905,41 +776,11 @@ function ServiceCatalog({ selectedService, onServiceSelect }: {
   );
 }
 
-function EC2Table({ instances, onAdd, sortBy, setSortBy }: { 
-  instances: any[]; 
-  onAdd: (instance: any) => void;
-  sortBy: string;
-  setSortBy: (sort: string) => void;
-}) {
+function EC2Table({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(instances.length / rowsPerPage);
   const paginatedInstances = instances.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-  const handleSort = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      // Toggle direction
-      const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-      setSortBy(`${field}_${newDirection}`);
-    } else {
-      // New field, default to desc for numeric fields, asc for text
-      const defaultDirection = ['OnDemand', 'vCPU', 'Memory'].includes(field) ? 'desc' : 'asc';
-      setSortBy(`${field}_${defaultDirection}`);
-    }
-  };
-
-  const getSortIcon = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      return currentDirection === 'asc' ? (
-        <ArrowUpDown className="w-3 h-3 text-primary" />
-      ) : (
-        <ArrowUpDown className="w-3 h-3 text-primary rotate-180" />
-      );
-    }
-    return <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />;
-  };
 
   if (instances.length === 0) {
     return (
@@ -961,44 +802,20 @@ function EC2Table({ instances, onAdd, sortBy, setSortBy }: {
         <table className="min-w-full">
           <thead className="bg-muted border-b border-border">
             <tr>
-              <th 
-                className="group px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors select-none hover:bg-muted/30"
-                onClick={() => handleSort('Instance Type')}
-              >
-                <div className="flex items-center gap-2">
-                  Instance Type
-                  {getSortIcon('Instance Type')}
-                </div>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Instance Type
               </th>
-              <th 
-                className="group px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors select-none hover:bg-muted/30"
-                onClick={() => handleSort('vCPU')}
-              >
-                <div className="flex items-center gap-2">
-                  vCPU
-                  {getSortIcon('vCPU')}
-                </div>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                vCPU
               </th>
-              <th 
-                className="group px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors select-none hover:bg-muted/30"
-                onClick={() => handleSort('Memory')}
-              >
-                <div className="flex items-center gap-2">
-                  Memory
-                  {getSortIcon('Memory')}
-                </div>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Memory
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Storage
               </th>
-              <th 
-                className="group px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors select-none hover:bg-muted/30"
-                onClick={() => handleSort('OnDemand')}
-              >
-                <div className="flex items-center gap-2">
-                  Cost/hr
-                  {getSortIcon('OnDemand')}
-                </div>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Cost/hr
               </th>
               <th className="px-6 py-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Action
@@ -1143,39 +960,11 @@ function EC2TableRow({ instance, onAdd }: { instance: any; onAdd: (instance: any
   );
 }
 
-function EBSTable({ volumes, onAdd, sortBy, setSortBy }: { 
-  volumes: any[]; 
-  onAdd: (volume: any) => void;
-  sortBy: string;
-  setSortBy: (sort: string) => void;
-}) {
+function EBSTable({ volumes, onAdd }: { volumes: any[]; onAdd: (volume: any) => void }) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(volumes.length / rowsPerPage);
   const paginatedVolumes = volumes.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-  const handleSort = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-      setSortBy(`${field}_${newDirection}`);
-    } else {
-      const defaultDirection = ['PricePerGBMonth', 'Size (GiB)', 'IOPS', 'Throughput (MB/s)'].includes(field) ? 'desc' : 'asc';
-      setSortBy(`${field}_${defaultDirection}`);
-    }
-  };
-
-  const getSortIcon = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      return currentDirection === 'asc' ? (
-        <ArrowUpDown className="w-3 h-3 text-primary" />
-      ) : (
-        <ArrowUpDown className="w-3 h-3 text-primary rotate-180" />
-      );
-    }
-    return <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />;
-  };
 
   if (volumes.length === 0) {
     return (
@@ -1358,39 +1147,11 @@ function EBSTableRow({ volume, onAdd }: { volume: any; onAdd: (volume: any) => v
   );
 }
 
-function RDSTable({ instances, onAdd, sortBy, setSortBy }: { 
-  instances: any[]; 
-  onAdd: (instance: any) => void;
-  sortBy: string;
-  setSortBy: (sort: string) => void;
-}) {
+function RDSTable({ instances, onAdd }: { instances: any[]; onAdd: (instance: any) => void }) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
   const totalPages = Math.ceil(instances.length / rowsPerPage);
   const paginatedInstances = instances.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-  const handleSort = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-      setSortBy(`${field}_${newDirection}`);
-    } else {
-      const defaultDirection = ['PricePerHour', 'vCPU', 'Memory (GiB)', 'Storage (GiB)'].includes(field) ? 'desc' : 'asc';
-      setSortBy(`${field}_${defaultDirection}`);
-    }
-  };
-
-  const getSortIcon = (field: string) => {
-    const [currentField, currentDirection] = sortBy.split('_');
-    if (currentField === field) {
-      return currentDirection === 'asc' ? (
-        <ArrowUpDown className="w-3 h-3 text-primary" />
-      ) : (
-        <ArrowUpDown className="w-3 h-3 text-primary rotate-180" />
-      );
-    }
-    return <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-70 transition-opacity" />;
-  };
 
   if (instances.length === 0) {
     return (
@@ -1608,9 +1369,9 @@ function BasketSidebar({
     <>
       <aside 
         ref={setNodeRef}
-        className={`w-[380px] bg-card border-l border-border flex flex-col h-screen max-h-screen shadow-xl flex-shrink-0 transition-all duration-200 ${isOver ? "ring-4 ring-blue-500 ring-opacity-50 bg-blue-50 dark:bg-blue-950" : ""}`}
+        className={`w-[380px] bg-card border-l border-border flex flex-col h-full shadow-xl flex-shrink-0 transition-all duration-200 ${isOver ? "ring-4 ring-blue-500 ring-opacity-50 bg-blue-50 dark:bg-blue-950" : ""}`}
       >
-        <div className="px-5 py-3 bg-gradient-to-r from-card to-muted text-foreground flex-shrink-0">
+        <div className="px-5 py-5 bg-gradient-to-r from-card to-muted text-foreground">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-muted/50 backdrop-blur-sm rounded-lg border border-border">
               <ShoppingCart className="w-5 h-5 text-foreground" />
@@ -1625,55 +1386,7 @@ function BasketSidebar({
             <span className="text-xl font-bold">{items.length}</span>
           </div>
         </div>
-        
-        {/* Cost Summary & Save Actions - Always visible at top */}
-        {items.length > 0 && (
-          <div className="px-5 py-3 border-b border-border bg-card/80 flex-shrink-0">
-            <div className="space-y-3">
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-3 border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                    Hourly Total
-                  </span>
-                  <span className="text-xl font-bold text-primary font-mono">${total.toFixed(2)}</span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Input 
-                  type="text" 
-                  placeholder="Name this configuration..." 
-                  value={sessionName} 
-                  onChange={e => setSessionName(e.target.value)} 
-                  className="h-9 text-sm bg-muted/50 border-border focus:border-primary focus:bg-card rounded-lg" 
-                />
-                
-                <div className="flex gap-2">
-                  <Button 
-                    className="flex-1 font-semibold text-sm h-9 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-lg" 
-                    onClick={onSave}
-                    disabled={items.length === 0 || !sessionName.trim()}
-                  >
-                    <Check className="w-4 h-4 mr-1.5" />
-                    Save Configuration
-                  </Button>
-                  <Button 
-                    className="px-3 h-9 rounded-lg" 
-                    variant="outline" 
-                    onClick={handleClearClick}
-                    disabled={items.length === 0}
-                    title="Clear cart"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="flex-1 px-5 py-3 overflow-y-auto bg-gradient-to-b from-card to-muted min-h-0">
+        <div className="flex-1 px-5 py-5 overflow-y-auto bg-gradient-to-b from-card to-muted min-h-0 max-h-full">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-muted-foreground px-4">
               <div className="relative mb-6">
@@ -1718,15 +1431,11 @@ function BasketSidebar({
               <ul className="space-y-2">
                 {items
                   .filter((item: BasketItem) => !item.attachedTo) // Only show top-level items (EC2 instances and standalone services)
-                  .map((item: BasketItem, index: number) => {
+                  .map((item: BasketItem) => {
                     const itemKey = item["Instance Type"] || item["Volume Type"] || "Unknown";
                     const attachedItems = items.filter((i: BasketItem) => i.attachedTo === itemKey);
-                    // Create unique key by combining itemKey with size for EBS volumes and index for uniqueness
-                    const uniqueKey = item["Volume Type"] 
-                      ? `${itemKey}-${item["Size (GiB)"] || 0}-${index}`
-                      : `${itemKey}-${index}`;
                     return (
-                      <li key={uniqueKey} className="group bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-all hover:border-muted-foreground">
+                      <li key={itemKey} className="group bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-all hover:border-muted-foreground">
                         {/* Main Item */}
                         <div className="flex flex-col gap-3 p-3">
                           <div className="flex items-start justify-between">
@@ -1738,61 +1447,46 @@ function BasketSidebar({
                                  <Server className="w-5 h-5 text-foreground" />}
                               </div>
                               <div className="flex-1">
-                                                        <div className="font-bold text-foreground text-base">{itemKey}</div>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-1">
-                          {item.vCPU && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
-                              <Cpu className="w-3 h-3" />
-                              {item.vCPU} vCPU
-                            </span>
-                          )}
-                          {item.Memory && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
-                              <Database className="w-3 h-3" />
-                              {item.Memory}
-                            </span>
-                          )}
-                          {item["Size (GiB)"] && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
-                              <HardDrive className="w-3 h-3" />
-                              {item["Size (GiB)"]} GiB
-                            </span>
-                          )}
-                          {item.IOPS && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
-                              <Activity className="w-3 h-3" />
-                              {item.IOPS} IOPS
-                            </span>
-                          )}
-                          {item.Engine && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
-                              <Database className="w-3 h-3" />
-                              {item.Engine}
-                            </span>
-                          )}
-                          {(() => {
-                            // Show region if there are multiple items with different regions
-                            const uniqueRegions = new Set(items.map((i: BasketItem) => i.Region).filter(Boolean));
-                            const shouldShowRegion = uniqueRegions.size > 1 && item.Region;
-                            
-                            if (shouldShowRegion) {
-                              return (
-                                <span className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
-                                  <Cloud className="w-3 h-3" />
-                                  {item.Region}
-                                </span>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
+                                <div className="font-bold text-foreground text-base">{itemKey}</div>
+                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-1">
+                                  {item.vCPU && (
+                                    <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
+                                      <Cpu className="w-3 h-3" />
+                                      {item.vCPU} vCPU
+                                    </span>
+                                  )}
+                                  {item.Memory && (
+                                    <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
+                                      <Database className="w-3 h-3" />
+                                      {item.Memory}
+                                    </span>
+                                  )}
+                                  {item["Size (GiB)"] && (
+                                    <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
+                                      <HardDrive className="w-3 h-3" />
+                                      {item["Size (GiB)"]} GiB
+                                    </span>
+                                  )}
+                                  {item.IOPS && (
+                                    <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
+                                      <Activity className="w-3 h-3" />
+                                      {item.IOPS} IOPS
+                                    </span>
+                                  )}
+                                  {item.Engine && (
+                                    <span className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full">
+                                      <Database className="w-3 h-3" />
+                                      {item.Engine}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <button 
                               className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                               aria-label="Remove" 
                               title="Remove from cart" 
-                              onClick={() => onRemove(item)}
+                              onClick={() => onRemove(itemKey)}
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1802,7 +1496,7 @@ function BasketSidebar({
                             type="text"
                             placeholder="Add a tag or note..."
                             value={String(item.note ?? "")}
-                            onChange={e => onNoteChange(item, e.target.value)}
+                            onChange={e => onNoteChange(itemKey, e.target.value)}
                             className="text-xs bg-muted border-border focus:bg-card"
                           />
                           
@@ -1813,9 +1507,9 @@ function BasketSidebar({
                                 aria-label="Decrease quantity" 
                                 onClick={() => {
                                   if (item.quantity === 1) {
-                                    onRemove(item);
+                                    onRemove(itemKey);
                                   } else {
-                                    onQuantityChange(item, item.quantity - 1);
+                                    onQuantityChange(itemKey, item.quantity - 1);
                                   }
                                 }}
                               >
@@ -1825,13 +1519,13 @@ function BasketSidebar({
                                 type="number" 
                                 min={1} 
                                 value={String(item.quantity)} 
-                                onChange={e => onQuantityChange(item, parseInt(e.target.value) || 1)} 
+                                onChange={e => onQuantityChange(itemKey, parseInt(e.target.value) || 1)} 
                                 className="w-12 text-center bg-card border border-border rounded-md px-1 py-1 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent" 
                               />
                               <button 
                                 className="p-1.5 rounded-md hover:bg-card text-muted-foreground hover:text-foreground transition-all"
                                 aria-label="Increase quantity" 
-                                onClick={() => onQuantityChange(item, item.quantity + 1)}
+                                onClick={() => onQuantityChange(itemKey, item.quantity + 1)}
                               >
                                 <Plus className="w-3 h-3" />
                               </button>
@@ -1880,11 +1574,10 @@ function BasketSidebar({
                                 <span>Attached Storage</span>
                                 <div className="flex-1 h-px bg-muted-foreground"></div>
                               </div>
-                              {attachedItems.map((attachedItem: any, attachedIndex: number) => {
+                              {attachedItems.map((attachedItem: any) => {
                                 const attachedKey = attachedItem["Volume Type"] || "Unknown";
-                                const attachedUniqueKey = `${attachedKey}-${attachedItem["Size (GiB)"] || 0}-attached-${attachedIndex}`;
                                 return (
-                                  <div key={attachedUniqueKey} className="flex items-center justify-between bg-card rounded-lg p-2 mb-2 last:mb-0 border border-border/50">
+                                  <div key={attachedKey} className="flex items-center justify-between bg-card rounded-lg p-2 mb-2 last:mb-0 border border-border/50">
                                     <div className="flex items-center gap-2">
                                       <div className="p-1.5 bg-muted rounded-md">
                                         <HardDrive className="w-4 h-4 text-muted-foreground" />
@@ -1905,9 +1598,9 @@ function BasketSidebar({
                                           aria-label="Decrease quantity" 
                                           onClick={() => {
                                             if (attachedItem.quantity === 1) {
-                                              onRemove(attachedItem);
+                                              onRemove(attachedKey);
                                             } else {
-                                              onQuantityChange(attachedItem, attachedItem.quantity - 1);
+                                              onQuantityChange(attachedKey, attachedItem.quantity - 1);
                                             }
                                           }}
                                         >
@@ -1919,7 +1612,7 @@ function BasketSidebar({
                                         <button 
                                           className="p-1 rounded hover:bg-card text-muted-foreground hover:text-foreground transition-all"
                                           aria-label="Increase quantity" 
-                                          onClick={() => onQuantityChange(attachedItem, attachedItem.quantity + 1)}
+                                          onClick={() => onQuantityChange(attachedKey, attachedItem.quantity + 1)}
                                         >
                                           <Plus className="w-2.5 h-2.5" />
                                         </button>
@@ -1939,7 +1632,7 @@ function BasketSidebar({
                                         className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-500 transition-all"
                                         aria-label="Remove attached storage" 
                                         title="Remove attached storage" 
-                                        onClick={() => onRemove(attachedItem)}
+                                        onClick={() => onRemove(attachedKey)}
                                       >
                                         <X className="w-3 h-3" />
                                       </button>
@@ -1957,10 +1650,10 @@ function BasketSidebar({
             </div>
           )}
         </div>
-        <div className="px-5 py-4 border-t border-border bg-card flex-shrink-0">
+        <div className="px-5 py-5 border-t border-border bg-card flex-shrink-0">
           <div className="mb-3">
-            <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">Cost Summary</h3>
-            <div className="bg-gradient-to-br from-muted to-muted/80 rounded-xl p-3 border border-border">
+            <h3 className="text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wider">Cost Summary</h3>
+            <div className="bg-gradient-to-br from-muted to-muted/80 rounded-xl p-4 border border-border">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full"></div>
@@ -1971,32 +1664,32 @@ function BasketSidebar({
             </div>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <Input 
               type="text" 
               placeholder="Name this configuration..." 
               value={sessionName} 
               onChange={e => setSessionName(e.target.value)} 
-              className="h-8 text-sm bg-muted border-border focus:border-primary focus:bg-card rounded-lg" 
+              className="h-9 text-sm bg-muted border-border focus:border-primary focus:bg-card rounded-lg" 
             />
             
             <div className="flex gap-2">
               <Button 
-                className="flex-1 font-semibold text-sm h-8 bg-primary hover:bg-primary/80 text-primary-foreground shadow-md rounded-lg" 
+                className="flex-1 font-semibold text-sm h-9 bg-primary hover:bg-primary/80 text-primary-foreground shadow-md rounded-lg" 
                 onClick={onSave}
                 disabled={items.length === 0 || !sessionName.trim()}
               >
-                <Check className="w-3 h-3 mr-1.5" />
+                <Check className="w-3.5 h-3.5 mr-1.5" />
                 Save Configuration
               </Button>
               <Button 
-                className="px-3 h-8 rounded-lg" 
+                className="px-3 h-9 rounded-lg" 
                 variant="outline" 
                 onClick={handleClearClick}
                 disabled={items.length === 0}
                 title="Clear cart"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
@@ -2025,452 +1718,19 @@ function BasketSidebar({
   );
 }
 
-function EBSSelectionDialog({ 
-  open, 
-  onOpenChange, 
-  onConfirm,
-  onSkipStorage,
-  availableVolumes,
-  ec2InstanceType,
-  defaultVolumeType,
-  defaultSize 
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: (volume: EBSVolume, size: number) => void;
-  onSkipStorage?: () => void;
-  availableVolumes: EBSVolume[];
-  ec2InstanceType?: string;
-  defaultVolumeType?: string;
-  defaultSize?: number;
-}) {
-  const [selectedVolumeType, setSelectedVolumeType] = useState(defaultVolumeType || "gp3");
-  const [selectedSize, setSelectedSize] = useState(defaultSize || 100);
-  
-  // Reset when dialog opens with new defaults
-  useEffect(() => {
-    if (open) {
-      setSelectedVolumeType(defaultVolumeType || "gp3");
-      setSelectedSize(defaultSize || 100);
-    }
-  }, [open, defaultVolumeType, defaultSize]);
-  
-  const volumeTypes = [...new Set(availableVolumes.map(v => v["Volume Type"]))];
-  const selectedVolume = availableVolumes.find(v => v["Volume Type"] === selectedVolumeType);
-  
-  const handleConfirm = () => {
-    if (selectedVolume) {
-      const customVolume = {
-        ...selectedVolume,
-        "Size (GiB)": selectedSize
-      };
-      onConfirm(customVolume, selectedSize);
-      onOpenChange(false);
-    }
-  };
-
-  const calculateMonthlyCost = () => {
-    if (!selectedVolume) return 0;
-    return selectedSize * selectedVolume.PricePerGBMonth;
-  };
-
-  const calculateHourlyCost = () => {
-    return calculateMonthlyCost() / (24 * 30.44);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add EBS Storage</DialogTitle>
-          <DialogDescription>
-            {ec2InstanceType 
-              ? `Configure storage for ${ec2InstanceType}. This instance requires EBS storage to function.`
-              : "Configure your EBS volume size and specifications."
-            }
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Volume Type</label>
-            <Select value={selectedVolumeType} onValueChange={setSelectedVolumeType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {volumeTypes.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Size (GiB)</label>
-            <Input
-              type="number"
-              min="1"
-              max="16384"
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(parseInt(e.target.value) || 100)}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Minimum: 1 GiB, Maximum: 16,384 GiB
-            </p>
-          </div>
-          
-          {selectedVolume && (
-            <div className="bg-muted rounded-lg p-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">IOPS:</span>
-                <span className="font-medium">{selectedVolume.IOPS}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Throughput:</span>
-                <span className="font-medium">{selectedVolume["Throughput (MB/s)"]} MB/s</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Price per GB/month:</span>
-                <span className="font-medium">${selectedVolume.PricePerGBMonth}</span>
-              </div>
-              <div className="border-t pt-2 mt-2">
-                <div className="flex justify-between text-sm font-medium">
-                  <span>Monthly cost:</span>
-                  <span>${calculateMonthlyCost().toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Hourly cost:</span>
-                  <span>${calculateHourlyCost().toFixed(3)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              if (ec2InstanceType && onSkipStorage) {
-                onSkipStorage();
-              } else {
-                onOpenChange(false);
-              }
-            }}
-          >
-            {ec2InstanceType ? "Skip Storage" : "Cancel"}
-          </Button>
-          <Button onClick={handleConfirm} disabled={!selectedVolume}>
-            {ec2InstanceType ? "Add Storage" : "Add to Cart"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface SearchCriteria {
-  field: string;
-  operator: string;
-  value: string;
-  id: string;
-}
-
-interface AdvancedSearchProps {
-  searchCriteria: SearchCriteria[];
-  setSearchCriteria: (criteria: SearchCriteria[]) => void;
-  quickSearch: string;
-  setQuickSearch: (search: string) => void;
-  service: "ec2" | "ebs" | "rds";
-}
-
-function AdvancedSearch({ 
-  searchCriteria, 
-  setSearchCriteria, 
-  quickSearch, 
-  setQuickSearch,
-  service 
-}: AdvancedSearchProps) {
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  
-  const fieldOptions = {
-    ec2: [
-      { value: "Instance Type", label: "Instance Type" },
-      { value: "vCPU", label: "vCPU" },
-      { value: "Memory", label: "Memory" },
-      { value: "OnDemand", label: "Price (On-Demand)" },
-      { value: "Operating System", label: "Operating System" },
-      { value: "Storage Edition", label: "Storage Edition" },
-      { value: "Model", label: "Model" },
-    ],
-    ebs: [
-      { value: "Volume Type", label: "Volume Type" },
-      { value: "Size (GiB)", label: "Size (GiB)" },
-      { value: "IOPS", label: "IOPS" },
-      { value: "Throughput (MB/s)", label: "Throughput (MB/s)" },
-      { value: "PricePerGBMonth", label: "Price per GB/Month" },
-      { value: "Description", label: "Description" },
-    ],
-    rds: [
-      { value: "Instance Type", label: "Instance Type" },
-      { value: "Engine", label: "Engine" },
-      { value: "vCPU", label: "vCPU" },
-      { value: "Memory (GiB)", label: "Memory (GiB)" },
-      { value: "Storage (GiB)", label: "Storage (GiB)" },
-      { value: "PricePerHour", label: "Price per Hour" },
-    ]
-  };
-
-  const operatorOptions = [
-    { value: "contains", label: "contains", icon: "🔍" },
-    { value: "equals", label: "equals", icon: "=" },
-    { value: "gt", label: "greater than", icon: ">" },
-    { value: "lt", label: "less than", icon: "<" },
-    { value: "gte", label: "greater than or equal", icon: "≥" },
-    { value: "lte", label: "less than or equal", icon: "≤" },
-    { value: "startsWith", label: "starts with", icon: "^" },
-    { value: "endsWith", label: "ends with", icon: "$" },
-    { value: "not", label: "does not contain", icon: "≠" },
-  ];
-
-  const addCriteria = () => {
-    const newCriteria: SearchCriteria = {
-      id: Date.now().toString(),
-      field: fieldOptions[service][0].value,
-      operator: "contains",
-      value: ""
-    };
-    setSearchCriteria([...searchCriteria, newCriteria]);
-  };
-
-  const updateCriteria = (id: string, updates: Partial<SearchCriteria>) => {
-    setSearchCriteria(
-      searchCriteria.map(criteria => 
-        criteria.id === id ? { ...criteria, ...updates } : criteria
-      )
-    );
-  };
-
-  const removeCriteria = (id: string) => {
-    setSearchCriteria(searchCriteria.filter(criteria => criteria.id !== id));
-  };
-
-  const clearAllCriteria = () => {
-    setSearchCriteria([]);
-    setQuickSearch("");
-  };
-
-  const hasActiveFilters = searchCriteria.length > 0 || quickSearch.trim() !== "";
-
-  return (
-    <div className="space-y-3">
-      {/* Quick Search Bar */}
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input 
-          type="text" 
-          placeholder="Quick search across all fields..." 
-          className="pl-10 pr-24 h-10 rounded-xl bg-background" 
-          value={quickSearch}
-          onChange={(e) => setQuickSearch(e.target.value)}
-        />
-        <div className="absolute right-2 top-2 flex items-center gap-1">
-          <Popover open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 px-2 text-xs ${searchCriteria.length > 0 ? 'bg-primary text-primary-foreground' : ''}`}
-              >
-                <Settings className="w-3 h-3 mr-1" />
-                Advanced
-                {searchCriteria.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
-                    {searchCriteria.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-96 p-0" align="end">
-              <div className="p-4 border-b">
-                <h4 className="font-semibold text-sm mb-2">Advanced Search</h4>
-                <p className="text-xs text-muted-foreground">
-                  Add multiple criteria to filter results precisely
-                </p>
-              </div>
-              
-              <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-                {searchCriteria.map((criteria) => (
-                  <div key={criteria.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                    <Select
-                      value={criteria.field}
-                      onValueChange={(value) => updateCriteria(criteria.id, { field: value })}
-                    >
-                      <SelectTrigger className="w-32 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fieldOptions[service].map((field) => (
-                          <SelectItem key={field.value} value={field.value} className="text-xs">
-                            {field.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select
-                      value={criteria.operator}
-                      onValueChange={(value) => updateCriteria(criteria.id, { operator: value })}
-                    >
-                      <SelectTrigger className="w-24 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {operatorOptions.map((op) => (
-                          <SelectItem key={op.value} value={op.value} className="text-xs">
-                            <span className="mr-2">{op.icon}</span>
-                            {op.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Input
-                      placeholder="Value..."
-                      value={criteria.value}
-                      onChange={(e) => updateCriteria(criteria.id, { value: e.target.value })}
-                      className="flex-1 h-8 text-xs"
-                    />
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCriteria(criteria.id)}
-                      className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-                
-                {searchCriteria.length === 0 && (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Settings className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No advanced filters set</p>
-                    <p className="text-xs">Click "Add Filter" to get started</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-4 border-t bg-muted/30 flex justify-between">
-                <div className="space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addCriteria}
-                    className="h-8 text-xs"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add Filter
-                  </Button>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearAllCriteria}
-                      className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Clear All
-                    </Button>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAdvancedOpen(false)}
-                  className="h-8 text-xs"
-                >
-                  Done
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-medium text-muted-foreground">Active filters:</span>
-          
-          {quickSearch && (
-            <Badge variant="secondary" className="gap-1 text-xs">
-              <SearchIcon className="w-3 h-3" />
-              "{quickSearch}"
-              <button
-                onClick={() => setQuickSearch("")}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-sm p-0.5"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </Badge>
-          )}
-          
-          {searchCriteria.map((criteria) => (
-            <Badge key={criteria.id} variant="outline" className="gap-1 text-xs">
-              <span className="font-medium">{criteria.field}</span>
-              <span className="text-muted-foreground">
-                {operatorOptions.find(op => op.value === criteria.operator)?.icon}
-              </span>
-              <span>"{criteria.value}"</span>
-              <button
-                onClick={() => removeCriteria(criteria.id)}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-sm p-0.5"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </Badge>
-          ))}
-          
-          {(searchCriteria.length > 1 || quickSearch) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllCriteria}
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear all
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CostsPage() {
   const [instances, setInstances] = useState<any[]>([]);
   const [ebsVolumes, setEbsVolumes] = useState<any[]>([]);
   const [rdsInstances, setRdsInstances] = useState<any[]>([]);
   const [basket, setBasket] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria[]>([]);
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortBy, setSortBy] = useState<string>("OnDemand_desc");
-  const [timeRange, setTimeRange] = useState("30d");
   const [service, setService] = useState<"ec2" | "ebs" | "rds">("ec2");
   const [region, setRegion] = useState("all");
   const [sessionName, setSessionName] = useState("");
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
-  const [ebsDialogOpen, setEbsDialogOpen] = useState(false);
-  const [pendingEC2Instance, setPendingEC2Instance] = useState<any>(null);
-  const [selectedEBSVolume, setSelectedEBSVolume] = useState<any>(null);
   const { toast } = useToast();
 
   // Load saved sessions from localStorage on component mount
@@ -2571,60 +1831,48 @@ export default function CostsPage() {
     }
   };
 
-  const handleRemove = (itemToRemove: BasketItem) => {
+  const handleRemove = (type: string) => {
     setBasket(prev => {
       // If removing an EC2 instance, also remove any attached EBS volumes
-      if (itemToRemove["Instance Type"]) {
-        const ec2Type = itemToRemove["Instance Type"];
+      const isEC2 = prev.find(i => i["Instance Type"] === type);
+      if (isEC2) {
         return prev.filter(i => {
-          // Remove the specific EC2 instance and any EBS volumes attached to it
-          return i !== itemToRemove && i.attachedTo !== ec2Type;
+          const itemKey = i["Instance Type"] || i["Volume Type"];
+          // Remove the EC2 instance and any EBS volumes attached to it
+          return itemKey !== type && i.attachedTo !== type;
         });
       }
       
-      // If removing an EBS volume, just remove that specific volume
-      return prev.filter(i => i !== itemToRemove);
+      // If removing an EBS volume, just remove that volume
+      return prev.filter(i => {
+        const itemKey = i["Instance Type"] || i["Volume Type"];
+        return itemKey !== type;
+      });
     });
     
-    const itemKey = itemToRemove["Instance Type"] || itemToRemove["Volume Type"] || "Unknown";
     toast({
       title: "Service removed",
-      description: `${itemKey} has been removed from your cart.`,
+      description: `${type} has been removed from your cart.`,
     });
   };
 
-  const handleQuantityChange = (itemToChange: BasketItem, qty: number) => {
+  const handleQuantityChange = (type: string, qty: number) => {
     setBasket(prev => prev.map(i => {
-      return i === itemToChange ? { ...i, quantity: Math.max(1, qty) } : i;
+      const itemKey = i["Instance Type"] || i["Volume Type"];
+      return itemKey === type ? { ...i, quantity: Math.max(1, qty) } : i;
     }));
   };
 
-  const handleNoteChange = (itemToChange: BasketItem, note: string) => {
+  const handleNoteChange = (type: string, note: string) => {
     setBasket(prev => prev.map(i => {
-      return i === itemToChange ? { ...i, note } : i;
+      const itemKey = i["Instance Type"] || i["Volume Type"];
+      return itemKey === type ? { ...i, note } : i;
     }));
   };
 
   const handleAddToBasket = (instance: any) => {
     const itemKey = instance["Instance Type"] || instance["Volume Type"];
     
-    // If this is an EC2 instance with "EBS only" storage, show the EBS selection dialog
-    if (instance["Instance Type"] && instance["Storage Edition"] === "EBS only") {
-      setPendingEC2Instance(instance);
-      setEbsDialogOpen(true);
-      return;
-    }
-    
-    // If this is an EBS volume being added directly, show the EBS selection dialog
-    if (instance["Volume Type"]) {
-      setPendingEC2Instance(null); // No EC2 instance for standalone EBS
-      setEbsDialogOpen(true);
-      // Store the selected EBS volume type for the dialog
-      setSelectedEBSVolume(instance);
-      return;
-    }
-    
-    // For RDS and other non-EBS services
     setBasket(prev => {
       const exists = prev.find(i => {
         const existingKey = i["Instance Type"] || i["Volume Type"];
@@ -2639,11 +1887,37 @@ export default function CostsPage() {
             : i;
         });
       } else {
-        return [...prev, { ...instance, quantity: 1 }];
+        let newItems = [{ ...instance, quantity: 1 }];
+        
+        // If this is an EC2 instance with "EBS only" storage, automatically add a gp3 EBS volume
+        if (instance["Instance Type"] && instance["Storage Edition"] === "EBS only") {
+          // Find a suitable gp3 EBS volume from the loaded data
+          const gp3Volume = ebsVolumes.find(vol => 
+            vol["Volume Type"] === "gp3" && 
+            vol["Size (GiB)"] === 100 && 
+            vol.Region === "us-east-1"
+          );
+          
+          if (gp3Volume) {
+            // Check if gp3 volume already exists in cart
+            const gp3Exists = prev.find(i => i["Volume Type"] === "gp3");
+            if (!gp3Exists) {
+              // Add EBS volume with attachment info
+              newItems.push({ 
+                ...gp3Volume, 
+                quantity: 1, 
+                attachedTo: instance["Instance Type"],
+                note: `Attached to ${instance["Instance Type"]}`
+              });
+            }
+          }
+        }
+        
+        return [...prev, ...newItems];
       }
     });
 
-    // Handle toast notifications
+    // Handle toast notifications after state update
     const exists = basket.find(i => {
       const existingKey = i["Instance Type"] || i["Volume Type"];
       return existingKey === itemKey;
@@ -2655,118 +1929,40 @@ export default function CostsPage() {
         description: `${itemKey} quantity increased in your cart.`,
       });
     } else {
-      toast({
-        title: "Service added to cart",
-        description: `${itemKey} has been added to your cart.`,
-      });
-    }
-  };
-
-  const handleEBSConfirm = (volume: EBSVolume, size: number) => {
-    const volumeKey = `${volume["Volume Type"]}-${size}gb-${Date.now()}`;
-    
-    if (pendingEC2Instance) {
-      // Adding EBS storage for an EC2 instance
-      const ec2Key = pendingEC2Instance["Instance Type"];
-      
-      setBasket(prev => {
-        const ec2Exists = prev.find(i => i["Instance Type"] === ec2Key);
-        let newBasket = prev;
-        
-        if (ec2Exists) {
-          newBasket = prev.map(i => 
-            i["Instance Type"] === ec2Key
-              ? { ...i, quantity: i.quantity + 1 }
-              : i
-          );
-        } else {
-          newBasket = [...prev, { ...pendingEC2Instance, quantity: 1 }];
-        }
-        
-        // Add EBS volume with custom size, attached to EC2
-        const customVolume = {
-          ...volume,
-          "Size (GiB)": size,
-          quantity: 1,
-          attachedTo: ec2Key,
-          note: `${size} GiB attached to ${ec2Key}`
-        };
-        
-        return [...newBasket, customVolume];
-      });
-      
-      toast({
-        title: "Services added to cart",
-        description: `${ec2Key} and ${size} GiB ${volume["Volume Type"]} storage have been added to your cart.`,
-      });
-      
-      setPendingEC2Instance(null);
-    } else {
-      // Adding standalone EBS volume
-      const customVolume = {
-        ...volume,
-        "Size (GiB)": size,
-        quantity: 1,
-        note: `${size} GiB ${volume["Volume Type"]} volume`
-      };
-      
-      setBasket(prev => {
-        const volumeTypeKey = `${volume["Volume Type"]}-${size}gb`;
-        const exists = prev.find(i => 
-          i["Volume Type"] === volume["Volume Type"] && 
-          i["Size (GiB)"] === size &&
-          !i.attachedTo
+      // Check if we're adding EC2 with EBS
+      if (instance["Instance Type"] && instance["Storage Edition"] === "EBS only") {
+        const gp3Volume = ebsVolumes.find(vol => 
+          vol["Volume Type"] === "gp3" && 
+          vol["Size (GiB)"] === 100 && 
+          vol.Region === "us-east-1"
         );
         
-        if (exists) {
-          return prev.map(i => 
-            i["Volume Type"] === volume["Volume Type"] && 
-            i["Size (GiB)"] === size &&
-            !i.attachedTo
-              ? { ...i, quantity: i.quantity + 1 }
-              : i
-          );
+        if (gp3Volume) {
+          const gp3Exists = basket.find(i => i["Volume Type"] === "gp3");
+          if (!gp3Exists) {
+            toast({
+              title: "Services added to cart",
+              description: `${itemKey} and gp3 EBS volume have been added to your cart.`,
+            });
+          } else {
+            toast({
+              title: "Service added to cart",
+              description: `${itemKey} has been added to your cart.`,
+            });
+          }
         } else {
-          return [...prev, customVolume];
+          toast({
+            title: "Service added to cart",
+            description: `${itemKey} has been added to your cart.`,
+          });
         }
-      });
-      
-      toast({
-        title: "Storage added to cart",
-        description: `${size} GiB ${volume["Volume Type"]} volume has been added to your cart.`,
-      });
-    }
-    
-    setSelectedEBSVolume(null);
-  };
-
-  const handleSkipStorage = () => {
-    if (!pendingEC2Instance) return;
-    
-    // Add only the EC2 instance without any storage
-    setBasket(prev => {
-      const ec2Key = pendingEC2Instance["Instance Type"];
-      const exists = prev.find(i => i["Instance Type"] === ec2Key);
-      
-      if (exists) {
-        return prev.map(i => 
-          i["Instance Type"] === ec2Key
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
       } else {
-        return [...prev, { ...pendingEC2Instance, quantity: 1 }];
+        toast({
+          title: "Service added to cart",
+          description: `${itemKey} has been added to your cart.`,
+        });
       }
-    });
-    
-    toast({
-      title: "EC2 instance added",
-      description: `${pendingEC2Instance["Instance Type"]} has been added to your cart without storage.`,
-    });
-    
-    // Clean up and close dialog
-    setPendingEC2Instance(null);
-    setEbsDialogOpen(false);
+    }
   };
 
   const handleSaveBasket = () => {
@@ -2843,75 +2039,30 @@ export default function CostsPage() {
     setSavedSessions(prev => prev.filter(s => s.id !== sessionId));
   };
 
-  // Advanced filtering logic
-  const applyFilters = (items: any[]) => {
-    return items.filter(item => {
-      // Quick search across all fields - treat spaces as separators
-      if (searchTerm.trim()) {
-        const searchTerms = searchTerm.trim().toLowerCase().split(/\s+/);
-        const itemText = Object.values(item).join(' ').toLowerCase();
-        
-        // All search terms must be present (AND logic)
-        const matchesQuickSearch = searchTerms.every(term => 
-          itemText.includes(term)
-        );
-        if (!matchesQuickSearch) return false;
-      }
+  const filteredInstances = instances.filter(i => {
+    // Search
+    const matchesSearch = Object.values(i).some(val =>
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    // Add more filters here based on service, region, etc.
+    return matchesSearch;
+  });
 
-      // Advanced search criteria
-      for (const criteria of searchCriteria) {
-        if (!criteria.value.trim()) continue;
-        
-        const fieldValue = String(item[criteria.field] || "").toLowerCase();
-        const searchValue = criteria.value.toLowerCase();
-        const numericFieldValue = parseFloat(String(item[criteria.field] || "0"));
-        const numericSearchValue = parseFloat(criteria.value);
+  const filteredEBSVolumes = ebsVolumes.filter(v => {
+    // Search
+    const matchesSearch = Object.values(v).some(val =>
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return matchesSearch;
+  });
 
-        let matches = false;
-        
-        switch (criteria.operator) {
-          case "contains":
-            matches = fieldValue.includes(searchValue);
-            break;
-          case "equals":
-            matches = fieldValue === searchValue;
-            break;
-          case "gt":
-            matches = !isNaN(numericFieldValue) && !isNaN(numericSearchValue) && numericFieldValue > numericSearchValue;
-            break;
-          case "lt":
-            matches = !isNaN(numericFieldValue) && !isNaN(numericSearchValue) && numericFieldValue < numericSearchValue;
-            break;
-          case "gte":
-            matches = !isNaN(numericFieldValue) && !isNaN(numericSearchValue) && numericFieldValue >= numericSearchValue;
-            break;
-          case "lte":
-            matches = !isNaN(numericFieldValue) && !isNaN(numericSearchValue) && numericFieldValue <= numericSearchValue;
-            break;
-          case "startsWith":
-            matches = fieldValue.startsWith(searchValue);
-            break;
-          case "endsWith":
-            matches = fieldValue.endsWith(searchValue);
-            break;
-          case "not":
-            matches = !fieldValue.includes(searchValue);
-            break;
-          default:
-            matches = fieldValue.includes(searchValue);
-        }
-        
-        if (!matches) return false;
-      }
-
-      return true;
-    });
-  };
-
-  const filteredInstances = applyFilters(instances);
-
-  const filteredEBSVolumes = applyFilters(ebsVolumes);
-  const filteredRDSInstances = applyFilters(rdsInstances);
+  const filteredRDSInstances = rdsInstances.filter(r => {
+    // Search
+    const matchesSearch = Object.values(r).some(val =>
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return matchesSearch;
+  });
 
   const sortedInstances = [...filteredInstances].sort((a, b) => {
     const [field, dir] = sortBy.split("_");
@@ -3019,7 +2170,7 @@ export default function CostsPage() {
   const serviceInfo = getServiceInfo();
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden" data-costs-page>
+    <div className="flex h-[calc(100vh-5rem)] min-h-[600px] bg-background" data-costs-page>
       <SavedSessionsSidebar 
         sessions={savedSessions}
         onLoadSession={handleLoadSession}
@@ -3075,13 +2226,14 @@ export default function CostsPage() {
           </div>
         </div>
         <FilterBar 
+          service={service} 
+          setService={setService} 
+          region={region} 
+          setRegion={setRegion}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          searchCriteria={searchCriteria}
-          setSearchCriteria={setSearchCriteria}
           sortBy={sortBy}
           setSortBy={setSortBy}
-          service={service}
         />
         <ServiceCatalog selectedService={service} onServiceSelect={setService} />
         <div className="mb-6">
@@ -3112,13 +2264,13 @@ export default function CostsPage() {
           </div>
           <DndContext onDragEnd={handleDragEnd}>
             {service === "ec2" && (
-              <EC2Table instances={serviceInfo.data} onAdd={handleAddToBasket} sortBy={sortBy} setSortBy={setSortBy} />
+              <EC2Table instances={serviceInfo.data} onAdd={handleAddToBasket} />
             )}
             {service === "ebs" && (
-              <EBSTable volumes={serviceInfo.data} onAdd={handleAddToBasket} sortBy={sortBy} setSortBy={setSortBy} />
+              <EBSTable volumes={serviceInfo.data} onAdd={handleAddToBasket} />
             )}
             {service === "rds" && (
-              <RDSTable instances={serviceInfo.data} onAdd={handleAddToBasket} sortBy={sortBy} setSortBy={setSortBy} />
+              <RDSTable instances={serviceInfo.data} onAdd={handleAddToBasket} />
             )}
           </DndContext>
         </div>
@@ -3134,17 +2286,6 @@ export default function CostsPage() {
         setSessionName={setSessionName}
         onSave={handleSaveBasket}
         onClear={handleClearBasket}
-      />
-      
-      <EBSSelectionDialog
-        open={ebsDialogOpen}
-        onOpenChange={setEbsDialogOpen}
-        onConfirm={handleEBSConfirm}
-        onSkipStorage={handleSkipStorage}
-        availableVolumes={ebsVolumes}
-        ec2InstanceType={pendingEC2Instance?.["Instance Type"]}
-        defaultVolumeType={selectedEBSVolume?.["Volume Type"]}
-        defaultSize={selectedEBSVolume?.["Size (GiB)"]}
       />
     </div>
   );
