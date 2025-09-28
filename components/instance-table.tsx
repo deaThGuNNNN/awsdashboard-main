@@ -432,194 +432,179 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
   }));
 
   return (
-    <div className="table-container">
+    <div className="h-[calc(100vh-300px)] flex flex-col">
       {isDrawing && <div className="drawing-overlay" />}
       
-      <div className="table-content">
-        {/* Summary stats */}
-        <div className="mb-4 grid grid-cols-3 gap-4">
-          <div className="bg-card p-4 rounded-lg shadow-sm border">
-            <div className="text-sm text-muted-foreground">Total Instances</div>
-            <div className="text-2xl font-bold">{summary.total}</div>
+      {/* Summary stats */}
+      <div className="mb-4 grid grid-cols-3 gap-4">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
+          <div className="text-sm text-muted-foreground">Total Instances</div>
+          <div className="text-2xl font-bold">{summary.total}</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
+          <div className="text-sm text-muted-foreground">Running</div>
+          <div className="text-2xl font-bold text-green-600">{summary.running}</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
+          <div className="text-sm text-muted-foreground">Stopped</div>
+          <div className="text-2xl font-bold text-red-600">{summary.stopped}</div>
+        </div>
+      </div>
+
+      {/* Table content */}
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-semibold">
+            {/* If you have a table title, put it here */}
           </div>
-          <div className="bg-card p-4 rounded-lg shadow-sm border">
-            <div className="text-sm text-muted-foreground">Running</div>
-            <div className="text-2xl font-bold text-green-600">{summary.running}</div>
-          </div>
-          <div className="bg-card p-4 rounded-lg shadow-sm border">
-            <div className="text-sm text-muted-foreground">Stopped</div>
-            <div className="text-2xl font-bold text-red-600">{summary.stopped}</div>
+          <div className="flex gap-2">
+            {filters && Object.keys(filters).length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onClearFilters}
+                className="text-destructive hover:text-destructive"
+              >
+                Clear all filters ({Object.keys(filters).length})
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Table content */}
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-lg font-semibold">
-              {/* If you have a table title, put it here */}
-            </div>
-            <div className="flex gap-2">
-              {filters && Object.keys(filters).length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={onClearFilters}
-                  className="text-destructive hover:text-destructive"
-                >
-                  Clear all filters ({Object.keys(filters).length})
-                </Button>
-              )}
-            </div>
+        <div className="relative flex flex-col bg-card rounded-lg border flex-1 min-h-0">
+          <div className="overflow-auto flex-1">
+            <table className="min-w-full">
+              <thead className="bg-muted border-b sticky top-0 z-10">
+                <tr>
+                  {visibleColumns.map((columnName, index) => (
+                    <th
+                      key={`header-${columnName}-${index}`}
+                      className={cn(
+                        "px-4 py-3 text-left text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted",
+                        sortConfig?.key === columnName ? "bg-muted/80" : ""
+                      )}
+                      onClick={() => requestSort(columnName)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{columnName}</span>
+                        {getSortDirectionIndicator(columnName)}
+                      </div>
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-card divide-y divide-border">
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={visibleColumns.length + 1}
+                      className="px-4 py-8 text-center text-muted-foreground"
+                    >
+                      No instances match the current filters
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedData.map((instance, rowIndex) => (
+                    <tr
+                      key={`row-${instance[keyField] || rowIndex}`}
+                      className="hover:bg-muted/50"
+                    >
+                      {visibleColumns.map((columnName, colIndex) => (
+                        <td
+                          key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`}
+                          className="px-4 py-3 text-sm text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap"
+                        >
+                          {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
+                            ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
+                            : formatCellValue(getCellValue(instance, columnName), columnName)}
+                        </td>
+                      ))}
+                      <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => copyToClipboard(instance[keyField])}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy ID
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewDetails(instance)}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              <tfoot className="bg-muted border-t sticky bottom-0 z-10">
+                <tr>
+                  {visibleColumns.map((columnName, index) => {
+                    const sum = filteredData.reduce((acc, item) => {
+                      const value = getCellValue(item, columnName);
+                      if (typeof value === 'number') {
+                        return acc + value;
+                      }
+                      if (typeof value === 'string') {
+                        const numericValue = parseFloat(value);
+                        if (!isNaN(numericValue)) {
+                          return acc + numericValue;
+                        }
+                      }
+                      return acc;
+                    }, 0);
+
+                    const shouldShowSum = filteredData.some(item => {
+                      const value = getCellValue(item, columnName);
+                      return typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)));
+                    });
+
+                    return (
+                      <td
+                        key={`footer-${columnName}-${index}`}
+                        className="px-4 py-3 text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted"
+                      >
+                        {shouldShowSum ? (
+                          <span className="font-semibold">
+                            Total: {sum.toLocaleString()}
+                          </span>
+                        ) : columnName === "State" ? (
+                          <span className="font-semibold">
+                            Total Rows: {filteredData.length}
+                          </span>
+                        ) : null}
+                      </td>
+                    );
+                  })}
+                  <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted"></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
 
-          <div className="relative flex flex-col bg-card rounded-lg border">
-            <div className="overflow-x-auto">
-              <div className="inline-block min-w-full align-middle">
-                {/* Fixed Header */}
-                <table className="min-w-full">
-                  <thead className="bg-muted border-b">
-                    <tr>
-                      {visibleColumns.map((columnName, index) => (
-                        <th
-                          key={`header-${columnName}-${index}`}
-                          className={cn(
-                            "px-4 py-3 text-left text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted",
-                            sortConfig?.key === columnName ? "bg-muted/80" : ""
-                          )}
-                          onClick={() => requestSort(columnName)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{columnName}</span>
-                            {getSortDirectionIndicator(columnName)}
-                          </div>
-                        </th>
-                      ))}
-                      <th className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                </table>
-
-                {/* Scrollable Body */}
-                <div className="overflow-y-auto scrollbar-thin" style={{ height: "520px" }}>
-                  <table className="min-w-full">
-                    <tbody className="bg-card divide-y divide-border">
-                      {paginatedData.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={visibleColumns.length + 1}
-                            className="px-4 py-8 text-center text-muted-foreground"
-                          >
-                            No instances match the current filters
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedData.map((instance, rowIndex) => (
-                          <tr
-                            key={`row-${instance[keyField] || rowIndex}`}
-                            className="hover:bg-muted/50"
-                          >
-                            {visibleColumns.map((columnName, colIndex) => (
-                              <td
-                                key={`cell-${instance[keyField] || rowIndex}-${columnName}-${colIndex}`}
-                                className="px-4 py-3 text-sm text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap"
-                              >
-                                {typeof formatCellValue(getCellValue(instance, columnName), columnName) === "string"
-                                  ? highlightSearchTerm(formatCellValue(getCellValue(instance, columnName), columnName) as string)
-                                  : formatCellValue(getCellValue(instance, columnName), columnName)}
-                              </td>
-                            ))}
-                            <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Open menu</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => copyToClipboard(instance[keyField])}>
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Copy ID
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleViewDetails(instance)}>
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="flex justify-center items-center gap-2 py-3">
-                  <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <Button
-                      key={i}
-                      size="sm"
-                      variant={page === i + 1 ? "default" : "outline"}
-                      onClick={() => setPage(i + 1)}
-                    >
-                      {i + 1}
-                    </Button>
-                  ))}
-                  <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-                </div>
-
-                {/* Fixed Footer */}
-                <table className="min-w-full">
-                  <tfoot className="bg-muted border-t">
-                    <tr>
-                      {visibleColumns.map((columnName, index) => {
-                        const sum = filteredData.reduce((acc, item) => {
-                          const value = getCellValue(item, columnName);
-                          if (typeof value === 'number') {
-                            return acc + value;
-                          }
-                          if (typeof value === 'string') {
-                            const numericValue = parseFloat(value);
-                            if (!isNaN(numericValue)) {
-                              return acc + numericValue;
-                            }
-                          }
-                          return acc;
-                        }, 0);
-
-                        const shouldShowSum = filteredData.some(item => {
-                          const value = getCellValue(item, columnName);
-                          return typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)));
-                        });
-
-                        return (
-                          <td
-                            key={`footer-${columnName}-${index}`}
-                            className="px-4 py-3 text-sm font-semibold text-foreground min-w-[150px] first:min-w-[200px] last:min-w-[100px] whitespace-nowrap bg-muted"
-                          >
-                            {shouldShowSum ? (
-                              <span className="font-semibold">
-                                Total: {sum.toLocaleString()}
-                              </span>
-                            ) : columnName === "State" ? (
-                              <span className="font-semibold">
-                                Total Rows: {filteredData.length}
-                              </span>
-                            ) : null}
-                          </td>
-                        );
-                      })}
-                      <td className="px-4 py-3 text-right min-w-[100px] whitespace-nowrap bg-muted"></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center gap-2 py-3 border-t bg-card">
+            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                size="sm"
+                variant={page === i + 1 ? "default" : "outline"}
+                onClick={() => setPage(i + 1)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
           </div>
         </div>
       </div>
@@ -654,31 +639,6 @@ const InstanceTable = forwardRef<InstanceTableRef, InstanceTableProps>(({
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
-        /* Webkit browsers custom scrollbar */
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 4px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background-color: #E5E7EB;
-          border-radius: 2px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background-color: #D1D5DB;
-        }
-
-        /* Firefox custom scrollbar */
-        .scrollbar-thin {
-          scrollbar-width: thin;
-          scrollbar-color: #E5E7EB transparent;
-        }
-      `}</style>
     </div>
   )
 })

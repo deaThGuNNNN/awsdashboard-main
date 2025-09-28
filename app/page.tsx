@@ -563,24 +563,22 @@ export default function Home() {
                     )}
                   </div>
                 ) : (
-                  <div className="h-[calc(100vh-300px)] overflow-auto">
-                    <InstanceTable 
-                      ref={ec2TableRef}
-                      data={filteredEC2Data.map(instance => ({
-                        ...instance,
-                        "Instance ID": instance["Instance ID"] || instance["InstanceId"],
-                        "Instance Type": instance["Instance Type"] || instance["InstanceType"],
-                        "Launch Time": instance["Launch Time"] || instance["LaunchTime"],
-                      }))} 
-                      keyField="Instance ID" 
-                      searchTerm={searchTerm}
-                      filters={filters}
-                      onClearFilters={() => {
-                        setFilters({})
-                        setFilteredEC2Data(ec2Data)
-                      }}
-                    />
-                  </div>
+                  <InstanceTable 
+                    ref={ec2TableRef}
+                    data={filteredEC2Data.map(instance => ({
+                      ...instance,
+                      "Instance ID": instance["Instance ID"] || instance["InstanceId"],
+                      "Instance Type": instance["Instance Type"] || instance["InstanceType"],
+                      "Launch Time": instance["Launch Time"] || instance["LaunchTime"],
+                    }))} 
+                    keyField="Instance ID" 
+                    searchTerm={searchTerm}
+                    filters={filters}
+                    onClearFilters={() => {
+                      setFilters({})
+                      setFilteredEC2Data(ec2Data)
+                    }}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -703,19 +701,17 @@ export default function Home() {
                     )}
                   </div>
                 ) : (
-                  <div className="h-[calc(100vh-300px)] overflow-auto">
-                    <InstanceTable 
-                      ref={rdsTableRef}
-                      data={filteredRDSData} 
-                      keyField="DBInstanceIdentifier" 
-                      searchTerm={searchTerm}
-                      filters={filters}
-                      onClearFilters={() => {
-                        setFilters({})
-                        setFilteredRDSData(rdsData)
-                      }}
-                    />
-                  </div>
+                  <InstanceTable 
+                    ref={rdsTableRef}
+                    data={filteredRDSData} 
+                    keyField="DBInstanceIdentifier" 
+                    searchTerm={searchTerm}
+                    filters={filters}
+                    onClearFilters={() => {
+                      setFilters({})
+                      setFilteredRDSData(rdsData)
+                    }}
+                  />
                 )}
               </CardContent>
             </Card>
